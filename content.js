@@ -225,15 +225,16 @@ function replaceSelectedText(newText, range) {
       const paragraphs = newText.split('\n').filter(text => text.trim());
       const fragment = document.createDocumentFragment();
       
-      paragraphs.forEach((text) => {
-        const div = document.createElement('div');
-        div.textContent = text.trim();
-        fragment.appendChild(div);
+      paragraphs.forEach((text, index) => {
+        if (index > 0) {
+          fragment.appendChild(document.createElement('br'));
+        }
+        fragment.appendChild(document.createTextNode(text));
       });
       
       range.insertNode(fragment);
     } else {
-      const textNode = document.createTextNode(newText.trim());
+      const textNode = document.createTextNode(newText);
       range.insertNode(textNode);
     }
   } else if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
