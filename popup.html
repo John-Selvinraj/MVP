@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Message Enhancer</title>
+  <link rel="stylesheet" href="styles/popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Message Enhancer</h1>
+    <p class="description">Configure your OpenAI API key to get started.</p>
+    
+    <div class="settings-section">
+      <div class="api-key-section">
+        <h2>OpenAI API Key</h2>
+        <input 
+          type="password" 
+          id="apiKey" 
+          placeholder="Enter your API key" 
+          class="text-input"
+        >
+      </div>
+      
+      <div class="button-group">
+        <button class="button ghost">Cancel</button>
+        <button id="saveApiKey" class="button primary">Save Key</button>
+      </div>
+    </div>
+
+    <div id="status" class="status"></div>
+  </div>
+  <script src="popup.js" type="module"></script>
+</body>
+</html>
