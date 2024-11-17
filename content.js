@@ -55,7 +55,7 @@ class EnhancementService {
     const objectiveGuide = {
       clarity: 'Enhance clarity while maintaining the main message',
       grammar: 'Fix grammatical errors only',
-      concise: 'Make the message more concise'
+      concise: 'Make the message more concise while fixing grammatical errors'
     };
 
     return `
@@ -167,7 +167,7 @@ async function handleEnhancement(objective) {
     const enhanced = await enhancementService.enhance(selectedText, objective);
 
     if (await showPreview(selectedText, enhanced)) {
-      replaceSelectedText(enhanced);
+      await replaceSelectedText(enhanced);
     }
   } catch (error) {
     showError('Failed to enhance text: ' + error.message);
@@ -179,39 +179,47 @@ async function handleEnhancement(objective) {
 async function replaceSelectedText(newText) {
   if (!lastRange) return;
 
-  // Get the Slack message input element
-  const messageInput = lastRange.startContainer.parentElement.closest('.ql-editor') || 
-                      lastRange.startContainer.parentElement.closest('[data-qa="message_input"]') ||
-                      lastRange.startContainer.parentElement.closest('[contenteditable="true"]');
+  try {
+    // Remove the current selection content
+    lastRange.deleteContents();
 
-  if (!messageInput) return;
+    // Create a text node with the new text
+    const textNode = document.createTextNode(newText);
 
-  // Replace the selected text with the new text
-  lastRange.deleteContents();
-  const textNode = document.createTextNode(newText);
-  lastRange.insertNode(textNode);
+    // Insert the new text node at the position of the old content
+    lastRange.insertNode(textNode);
 
-  // Move the cursor to the end of the inserted text
-  const range = document.createRange();
-  range.setStartAfter(textNode);
-  range.collapse(true);
+    // Move the cursor to the end of the inserted text node
+    const selection = window.getSelection();
+    selection.removeAllRanges();
 
-  const selection = window.getSelection();
-  selection.removeAllRanges();
-  selection.addRange(range);
+    // Create a new range starting and ending at the end of the new text node
+    const range = document.createRange();
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
 
-  // Clear the lastRange
-  lastRange = null;
+    // Add the range to the selection
+    selection.addRange(range);
+  } catch (error) {
+    console.error('Error replacing text:', error);
+  } finally {
+    // Clear the lastRange
+    lastRange = null;
+  }
 }
 
 function showPreview(original, enhanced) {
   return new Promise((resolve) => {
     const preview = document.createElement('div');
     preview.className = 'message-enhancer-preview';
+    
+    // Clean up the enhanced text for preview
+    const cleanedEnhanced = enhanced.trim().replace(/^\n+|\n+$/g, '');
+    
     preview.innerHTML = `
       <div class="preview-content">
         <h3>Message Enhancement Preview</h3>
-        <div class="preview-text">${enhanced.replace(/\n/g, '<br>')}</div>
+        <div class="preview-text">${cleanedEnhanced.replace(/\n/g, '<br>')}</div>
         <div class="preview-actions">
           <button class="cancel-btn">Cancel</button>
           <button class="apply-btn">Apply Changes</button>
@@ -244,8 +252,7 @@ function showPreview(original, enhanced) {
       resolve(false);
     };
 
-    preview.querySelector('.apply-btn').onclick = async () => {
-      await replaceSelectedText(enhanced);
+    preview.querySelector('.apply-btn').onclick = () => {
       preview.remove();
       resolve(true);
     };
