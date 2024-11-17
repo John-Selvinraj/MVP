@@ -112,7 +112,12 @@ document.addEventListener('mouseup', (e) => {
   const selection = window.getSelection();
   const selectedText = selection.toString().trim();
 
-  if (selectedText && selection.rangeCount > 0) {
+  // Check if selection is within a Slack message input area
+  const isInMessageInput = e.target.closest('.ql-editor') || // Rich text editor
+                          e.target.closest('[data-qa="message_input"]') || // Message input
+                          e.target.closest('[contenteditable="true"]'); // Editable area
+
+  if (selectedText && selection.rangeCount > 0 && isInMessageInput) {
     lastRange = selection.getRangeAt(0);
     const rect = lastRange.getBoundingClientRect();
 
@@ -131,8 +136,13 @@ document.addEventListener('keyup', (e) => {
     setTimeout(() => {
       const selection = window.getSelection();
       const selectedText = selection.toString().trim();
+      
+      // Check if selection is within a Slack message input area
+      const isInMessageInput = selection.anchorNode?.parentElement?.closest('.ql-editor') ||
+                              selection.anchorNode?.parentElement?.closest('[data-qa="message_input"]') ||
+                              selection.anchorNode?.parentElement?.closest('[contenteditable="true"]');
 
-      if (selectedText && selection.rangeCount > 0) {
+      if (selectedText && selection.rangeCount > 0 && isInMessageInput) {
         lastRange = selection.getRangeAt(0);
         const rect = lastRange.getBoundingClientRect();
 
@@ -192,6 +202,43 @@ async function handleEnhancement(objective) {
   }
 }
 
+async function replaceSelectedText(newText) {
+  if (!lastRange) return;
+
+  // Get the Slack message input element
+  const messageInput = lastRange.startContainer.parentElement.closest('.ql-editor') || 
+                      lastRange.startContainer.parentElement.closest('[data-qa="message_input"]') ||
+                      lastRange.startContainer.parentElement.closest('[contenteditable="true"]');
+
+  if (!messageInput) return;
+
+  // Store the current cursor position and selection
+  const selection = window.getSelection();
+  const start = lastRange.startOffset;
+  const end = lastRange.endOffset;
+
+  // Get the full text content
+  const fullText = messageInput.textContent;
+  
+  // Create the new text by replacing only the selected portion
+  const newContent = fullText.substring(0, start) + newText + fullText.substring(end);
+  
+  // Update the content
+  messageInput.textContent = newContent;
+
+  // Restore cursor position after the replaced text
+  const range = document.createRange();
+  const textNode = messageInput.firstChild || messageInput;
+  range.setStart(textNode, start + newText.length);
+  range.setEnd(textNode, start + newText.length);
+  
+  selection.removeAllRanges();
+  selection.addRange(range);
+
+  // Clear the lastRange
+  lastRange = null;
+}
+
 function showPreview(original, enhanced) {
   return new Promise((resolve) => {
     const preview = document.createElement('div');
@@ -231,51 +278,12 @@ function showPreview(original, enhanced) {
       resolve(false);
     };
 
-    preview.querySelector('.apply-btn').onclick = () => {
+    preview.querySelector('.apply-btn').onclick = async () => {
+      await replaceSelectedText(enhanced);
       preview.remove();
       resolve(true);
     };
   });
-}
-
-function replaceSelectedText(newText, range) {
-  if (!range) return;
-
-  const selection = window.getSelection();
-  selection.removeAllRanges();
-  selection.addRange(range);
-
-  const container = range.startContainer;
-  const element = container.nodeType === 3 ? container.parentElement : container;
-
-  if (element.isContentEditable || element.closest('[contenteditable="true"]')) {
-    range.deleteContents();
-
-    // Format new text for contenteditable elements
-    const fragment = document.createDocumentFragment();
-    newText.split('\n').forEach(line => {
-      const div = document.createElement('div');
-      div.textContent = line;
-      fragment.appendChild(div);
-    });
-
-    range.insertNode(fragment);
-
-    // Move cursor to the end of the inserted content
-    const newRange = document.createRange();
-    newRange.setStartAfter(fragment.lastChild);
-    newRange.collapse(true);
-    selection.removeAllRanges();
-    selection.addRange(newRange);
-  } else if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
-    const input = element;
-    const start = input.selectionStart;
-    const end = input.selectionEnd;
-    input.value = input.value.substring(0, start) + newText + input.value.substring(end);
-    input.setSelectionRange(start + newText.length, start + newText.length);
-  }
-
-  lastRange = null;
 }
 
 function showError(message) {
