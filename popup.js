@@ -13,6 +13,11 @@ document.addEventListener('DOMContentLoaded', () => {
       updateStatus('API key saved successfully!');
     });
   });
+
+  // Add Cancel button handler
+  document.querySelector('.button.ghost').addEventListener('click', () => {
+    window.close();
+  });
 });
 
 function updateStatus(message) {

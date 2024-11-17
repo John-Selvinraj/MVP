@@ -1,6 +1,8 @@
+// Initialize variables
 let enhancementService;
 let lastRange = null;
 
+// EnhancementService class
 class EnhancementService {
   constructor(apiKey) {
     this.apiKey = apiKey;
@@ -32,7 +34,18 @@ class EnhancementService {
         throw new Error('Invalid API response');
       }
       
-      return data.choices[0].message.content;
+      let content = data.choices[0].message.content;
+
+      // Post-processing to remove unwanted quotation marks and normalize whitespace
+      content = content.replace(/```(?:\w+)?\n?([\s\S]*?)\n?```/g, '$1'); // Remove code blocks if present
+      content = content.replace(/["']/g, ''); // Remove quotation marks
+      content = content
+        .split('\n')
+        .map(line => line.trim())
+        .join('\n')
+        .replace(/\n{2,}/g, '\n\n'); // Normalize whitespace and preserve paragraphs
+
+      return content.trim();
     } catch (error) {
       throw new Error(`Enhancement failed: ${error.message}`);
     }
@@ -46,14 +59,16 @@ class EnhancementService {
     };
 
     return `
-      Please revise the following message:
-      "${text}"
-      
-      Requirements:
-      - ${objectiveGuide[objective]}
-      - Maintain the original meaning
-      - Keep any technical terms intact
-    `;
+Please revise the following message:
+
+"${text}"
+
+Requirements:
+- ${objectiveGuide[objective]}
+- Maintain the original meaning
+- Keep any technical terms intact
+- Return ONLY the revised text without any additional explanations or formatting.
+`;
   }
 }
 
@@ -62,30 +77,37 @@ const iconsContainer = document.createElement('div');
 iconsContainer.className = 'message-enhancer-icons hidden';
 iconsContainer.innerHTML = `
   <button class="enhance-icon" data-objective="clarity" data-tooltip="Enhance Clarity">
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
     </svg>
   </button>
   <button class="enhance-icon" data-objective="grammar" data-tooltip="Fix Grammar">
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
     </svg>
   </button>
   <button class="enhance-icon" data-objective="concise" data-tooltip="Make Concise">
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+      <path d="M4 6h16"/>
+      <path d="M4 12h10"/>
+      <path d="M4 18h4"/>
     </svg>
   </button>
 `;
 
 document.body.appendChild(iconsContainer);
 
-// Initialize service
+// Initialize the enhancement service with the API key from storage
 chrome.storage.sync.get(['apiKey'], (settings) => {
-  enhancementService = new EnhancementService(settings.apiKey || '');
+  if (settings.apiKey) {
+    enhancementService = new EnhancementService(settings.apiKey);
+  } else {
+    console.error('OpenAI API key is not set in the extension settings.');
+  }
 });
 
-// Handle text selection
+// Handle text selection to show enhancement icons
 document.addEventListener('mouseup', (e) => {
   const selection = window.getSelection();
   const selectedText = selection.toString().trim();
@@ -93,17 +115,19 @@ document.addEventListener('mouseup', (e) => {
   if (selectedText && selection.rangeCount > 0) {
     lastRange = selection.getRangeAt(0);
     const rect = lastRange.getBoundingClientRect();
-    
+
     // Position the icons near the selection
     iconsContainer.style.top = `${window.scrollY + rect.bottom + 10}px`;
     iconsContainer.style.left = `${window.scrollX + rect.left}px`;
     iconsContainer.classList.remove('hidden');
+  } else {
+    iconsContainer.classList.add('hidden');
   }
 });
 
-// Handle keyboard selection (Ctrl+A)
+// Handle keyboard selection (e.g., Ctrl+A)
 document.addEventListener('keyup', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
     setTimeout(() => {
       const selection = window.getSelection();
       const selectedText = selection.toString().trim();
@@ -111,10 +135,12 @@ document.addEventListener('keyup', (e) => {
       if (selectedText && selection.rangeCount > 0) {
         lastRange = selection.getRangeAt(0);
         const rect = lastRange.getBoundingClientRect();
-        
+
         iconsContainer.style.top = `${window.scrollY + rect.bottom + 10}px`;
         iconsContainer.style.left = `${window.scrollX + rect.left}px`;
         iconsContainer.classList.remove('hidden');
+      } else {
+        iconsContainer.classList.add('hidden');
       }
     }, 100);
   }
@@ -144,7 +170,10 @@ async function handleEnhancement(objective) {
   if (!selectedText) return;
 
   try {
-    const settings = await chrome.storage.sync.get(['apiKey']);
+    const settings = await new Promise((resolve) => {
+      chrome.storage.sync.get(['apiKey'], resolve);
+    });
+
     if (!settings.apiKey) {
       showError('Please set your OpenAI API key in the extension settings');
       return;
@@ -212,30 +241,32 @@ function showPreview(original, enhanced) {
 function replaceSelectedText(newText, range) {
   if (!range) return;
 
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+
   const container = range.startContainer;
   const element = container.nodeType === 3 ? container.parentElement : container;
-  const isGmail = window.location.hostname === 'mail.google.com';
 
-  if (element.isContentEditable || 
-      element.closest('[contenteditable="true"]') ||
-      element.closest('[role="textbox"]')) {
+  if (element.isContentEditable || element.closest('[contenteditable="true"]')) {
     range.deleteContents();
-    
-    if (isGmail) {
-      const paragraphs = newText.split('\n').filter(text => text.trim());
-      const fragment = document.createDocumentFragment();
-      
-      paragraphs.forEach((text) => {
-        const div = document.createElement('div');
-        div.textContent = text.trim();
-        fragment.appendChild(div);
-      });
-      
-      range.insertNode(fragment);
-    } else {
-      const textNode = document.createTextNode(newText.trim());
-      range.insertNode(textNode);
-    }
+
+    // Format new text for contenteditable elements
+    const fragment = document.createDocumentFragment();
+    newText.split('\n').forEach(line => {
+      const div = document.createElement('div');
+      div.textContent = line;
+      fragment.appendChild(div);
+    });
+
+    range.insertNode(fragment);
+
+    // Move cursor to the end of the inserted content
+    const newRange = document.createRange();
+    newRange.setStartAfter(fragment.lastChild);
+    newRange.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(newRange);
   } else if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
     const input = element;
     const start = input.selectionStart;

@@ -3,7 +3,158 @@
 <head>
   <meta charset="UTF-8">
   <title>Message Enhancer</title>
-  <link rel="stylesheet" href="styles/popup.css">
+  <style>
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 222.2 84% 4.9%;
+      --card: 0 0% 100%;
+      --card-foreground: 222.2 84% 4.9%;
+      --popover: 0 0% 100%;
+      --popover-foreground: 222.2 84% 4.9%;
+      --primary: 222.2 47.4% 11.2%;
+      --primary-foreground: 210 40% 98%;
+      --secondary: 210 40% 96.1%;
+      --secondary-foreground: 222.2 47.4% 11.2%;
+      --muted: 210 40% 96.1%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --accent: 210 40% 96.1%;
+      --accent-foreground: 222.2 47.4% 11.2%;
+      --border: 214.3 31.8% 91.4%;
+      --input: 214.3 31.8% 91.4%;
+      --ring: 222.2 84% 4.9%;
+      --radius: 0.5rem;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      width: 400px;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+    }
+
+    .container {
+      width: 400px;
+      max-width: 100%;
+      padding: 24px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+      box-sizing: border-box;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #18181b;
+      margin: 0;
+    }
+
+    .description {
+      margin-top: 8px;
+      font-size: 0.875rem;
+      color: #4b5563;
+    }
+
+    .settings-section {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      border: none;
+      background: transparent;
+      padding: 0;
+    }
+
+    .api-key-section {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .api-key-section h2 {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #18181b;
+      margin: 0;
+    }
+
+    .text-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: #18181b;
+      background: white;
+      transition: all 0.15s ease;
+      box-sizing: border-box;
+    }
+
+    .text-input:focus {
+      outline: none;
+      border-color: #18181b;
+      box-shadow: 0 0 0 1px #18181b;
+    }
+
+    .text-input::placeholder {
+      color: #9ca3af;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .button {
+      flex: 1;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .button.primary {
+      background: #18181b;
+      color: white;
+      border: none;
+    }
+
+    .button.primary:hover {
+      background: #27272a;
+    }
+
+    .button.ghost {
+      background: transparent;
+      border: 1px solid #e5e7eb;
+      color: #18181b;
+    }
+
+    .button.ghost:hover {
+      background: #f9fafb;
+    }
+
+    .status {
+      margin-top: 16px;
+      padding: 8px 12px;
+      background: white;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: #4b5563;
+      text-align: center;
+      display: none;
+    }
+
+    .status.show {
+      display: block;
+      background: #f9fafb;
+    }
+  </style>
 </head>
 <body>
   <div class="container">

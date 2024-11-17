@@ -13,17 +13,17 @@
 }
 
 .enhance-icon {
-  width: 32px;
-  height: 32px;
-  padding: 6px;
-  border: 1px solid hsl(var(--border));
+  width: 36px;
+  height: 36px;
+  padding: 8px;
   border-radius: 6px;
   cursor: pointer;
   background: white;
-  transition: all 0.2s ease;
-  display: flex;
+  transition: all 0.15s ease;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .enhance-icon img {
@@ -113,4 +113,50 @@
 .apply-btn:hover {
   background: #27272a;
   opacity: 1;
+}
+
+/* Add tooltip styles */
+.enhance-icon::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 10px;
+  background: hsl(var(--popover-foreground, 240 10% 3.9%));
+  color: hsl(var(--popover, 0 0% 100%));
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 1000;
+}
+
+/* Show tooltip on hover */
+.enhance-icon:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Optional: Add a small arrow to the tooltip */
+.enhance-icon::after {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: hsl(var(--popover-foreground, 240 10% 3.9%)) transparent transparent transparent;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+}
+
+.enhance-icon:hover::after {
+  opacity: 1;
+  visibility: visible;
 }
