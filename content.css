@@ -1,22 +1,22 @@
 .message-enhancer-icons {
   position: absolute;
-  display: flex;
-  gap: 0.5rem;
-  padding: 0.5rem;
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
   background: white;
-  border-radius: 8px;
-  border: 1px solid hsl(var(--border));
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  border: 1px solid hsl(var(--border, 240 5.9% 90%));
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   z-index: 999999;
   opacity: 1;
   visibility: visible;
 }
 
 .enhance-icon {
-  width: 36px;
-  height: 36px;
-  padding: 8px;
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  padding: 6px;
+  border-radius: 4px;
   cursor: pointer;
   background: white;
   transition: all 0.15s ease;
