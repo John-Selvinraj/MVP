@@ -107,15 +107,15 @@ chrome.storage.sync.get(['apiKey'], (settings) => {
   }
 });
 
-// Handle text selection to show enhancement icons
-document.addEventListener('mouseup', (e) => {
+// Handle selection changes to show enhancement icons
+document.addEventListener('selectionchange', () => {
   const selection = window.getSelection();
   const selectedText = selection.toString().trim();
 
   // Check if selection is within a Slack message input area
-  const isInMessageInput = e.target.closest('.ql-editor') || // Rich text editor
-                          e.target.closest('[data-qa="message_input"]') || // Message input
-                          e.target.closest('[contenteditable="true"]'); // Editable area
+  const isInMessageInput = selection.anchorNode?.parentElement?.closest('.ql-editor') ||
+                          selection.anchorNode?.parentElement?.closest('[data-qa="message_input"]') ||
+                          selection.anchorNode?.parentElement?.closest('[contenteditable="true"]');
 
   if (selectedText && selection.rangeCount > 0 && isInMessageInput) {
     lastRange = selection.getRangeAt(0);
@@ -127,32 +127,6 @@ document.addEventListener('mouseup', (e) => {
     iconsContainer.classList.remove('hidden');
   } else {
     iconsContainer.classList.add('hidden');
-  }
-});
-
-// Handle keyboard selection (e.g., Ctrl+A)
-document.addEventListener('keyup', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
-    setTimeout(() => {
-      const selection = window.getSelection();
-      const selectedText = selection.toString().trim();
-      
-      // Check if selection is within a Slack message input area
-      const isInMessageInput = selection.anchorNode?.parentElement?.closest('.ql-editor') ||
-                              selection.anchorNode?.parentElement?.closest('[data-qa="message_input"]') ||
-                              selection.anchorNode?.parentElement?.closest('[contenteditable="true"]');
-
-      if (selectedText && selection.rangeCount > 0 && isInMessageInput) {
-        lastRange = selection.getRangeAt(0);
-        const rect = lastRange.getBoundingClientRect();
-
-        iconsContainer.style.top = `${window.scrollY + rect.bottom + 10}px`;
-        iconsContainer.style.left = `${window.scrollX + rect.left}px`;
-        iconsContainer.classList.remove('hidden');
-      } else {
-        iconsContainer.classList.add('hidden');
-      }
-    }, 100);
   }
 });
 
@@ -193,7 +167,7 @@ async function handleEnhancement(objective) {
     const enhanced = await enhancementService.enhance(selectedText, objective);
 
     if (await showPreview(selectedText, enhanced)) {
-      replaceSelectedText(enhanced, lastRange);
+      replaceSelectedText(enhanced);
     }
   } catch (error) {
     showError('Failed to enhance text: ' + error.message);
@@ -212,26 +186,17 @@ async function replaceSelectedText(newText) {
 
   if (!messageInput) return;
 
-  // Store the current cursor position and selection
-  const selection = window.getSelection();
-  const start = lastRange.startOffset;
-  const end = lastRange.endOffset;
+  // Replace the selected text with the new text
+  lastRange.deleteContents();
+  const textNode = document.createTextNode(newText);
+  lastRange.insertNode(textNode);
 
-  // Get the full text content
-  const fullText = messageInput.textContent;
-  
-  // Create the new text by replacing only the selected portion
-  const newContent = fullText.substring(0, start) + newText + fullText.substring(end);
-  
-  // Update the content
-  messageInput.textContent = newContent;
-
-  // Restore cursor position after the replaced text
+  // Move the cursor to the end of the inserted text
   const range = document.createRange();
-  const textNode = messageInput.firstChild || messageInput;
-  range.setStart(textNode, start + newText.length);
-  range.setEnd(textNode, start + newText.length);
-  
+  range.setStartAfter(textNode);
+  range.collapse(true);
+
+  const selection = window.getSelection();
   selection.removeAllRanges();
   selection.addRange(range);
 
@@ -265,13 +230,14 @@ function showPreview(original, enhanced) {
     });
 
     // Close on Escape key
-    document.addEventListener('keydown', function escapeHandler(e) {
+    function escapeHandler(e) {
       if (e.key === 'Escape') {
         preview.remove();
         resolve(false);
         document.removeEventListener('keydown', escapeHandler);
       }
-    });
+    }
+    document.addEventListener('keydown', escapeHandler);
 
     preview.querySelector('.cancel-btn').onclick = () => {
       preview.remove();
