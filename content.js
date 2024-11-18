@@ -175,39 +175,45 @@ async function handleEnhancement(objective) {
     iconsContainer.classList.add('hidden');
   }
 }
-
 async function replaceSelectedText(newText) {
   if (!lastRange) return;
 
-  try {
-    // Remove the current selection content
-    lastRange.deleteContents();
+  const messageInput = lastRange.startContainer.parentElement.closest('.ql-editor') || 
+                      lastRange.startContainer.parentElement.closest('[data-qa="message_input"]') ||
+                      lastRange.startContainer.parentElement.closest('[contenteditable="true"]');
 
-    // Create a text node with the new text
-    const textNode = document.createTextNode(newText);
+  if (!messageInput) return;
 
-    // Insert the new text node at the position of the old content
-    lastRange.insertNode(textNode);
+  const cleanedText = newText.trim().replace(/^\n+|\n+$/g, '');
+  
+  // Get the text content before the selection
+  const beforeRange = document.createRange();
+  beforeRange.setStart(messageInput, 0);
+  beforeRange.setEnd(lastRange.startContainer, lastRange.startOffset);
+  const beforeText = beforeRange.toString();
 
-    // Move the cursor to the end of the inserted text node
-    const selection = window.getSelection();
-    selection.removeAllRanges();
+  // Get the text content after the selection
+  const afterRange = document.createRange();
+  afterRange.setStart(lastRange.endContainer, lastRange.endOffset);
+  afterRange.setEnd(messageInput, messageInput.childNodes.length);
+  const afterText = afterRange.toString();
 
-    // Create a new range starting and ending at the end of the new text node
-    const range = document.createRange();
-    range.setStartAfter(textNode);
-    range.setEndAfter(textNode);
+  // Combine the text parts
+  messageInput.textContent = beforeText + cleanedText + afterText;
 
-    // Add the range to the selection
-    selection.addRange(range);
-  } catch (error) {
-    console.error('Error replacing text:', error);
-  } finally {
-    // Clear the lastRange
-    lastRange = null;
-  }
+  // Update cursor position
+  const range = document.createRange();
+  const textNode = messageInput.firstChild || messageInput;
+  const newPosition = beforeText.length + cleanedText.length;
+  range.setStart(textNode, newPosition);
+  range.setEnd(textNode, newPosition);
+  
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+
+  lastRange = null;
 }
-
 function showPreview(original, enhanced) {
   return new Promise((resolve) => {
     const preview = document.createElement('div');
