@@ -6,13 +6,15 @@ let lastRange = null;
 class EnhancementService {
   constructor(apiKey) {
     this.apiKey = apiKey;
-    this.englishVariant = 'american'; // default value
-    this.tone = 'professional'; // default value
+    this.englishVariant = 'american';
+    this.tone = 'professional';
+    this.model = 'gpt-3.5-turbo';
     
     // Load the preferences
-    chrome.storage.sync.get(['englishVariant', 'tone'], (settings) => {
+    chrome.storage.sync.get(['englishVariant', 'tone', 'model'], (settings) => {
       this.englishVariant = settings.englishVariant || 'american';
       this.tone = settings.tone || 'professional';
+      this.model = settings.model || 'gpt-3.5-turbo';
     });
   }
 
@@ -28,7 +30,7 @@ class EnhancementService {
           'Authorization': `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
+          model: this.model,
           messages: [{
             role: 'system',
             content: `You are a professional writing assistant that writes in ${variantText} with a ${toneText} tone. Always use ${variantText} spelling and grammar conventions while maintaining the specified tone.`
@@ -88,9 +90,26 @@ Requirements:
   }
 }
 
+// Add this function to update icon sizes
+function updateIconSizes(size) {
+  const icons = document.querySelector('.message-enhancer-icons');
+  if (icons) {
+    icons.style.setProperty('--icon-size', `${size}px`);
+    // Adjust padding based on icon size
+    const padding = size <= 26 ? 5 : size >= 30 ? 7 : 6;
+    icons.style.setProperty('--icon-padding', `${padding}px`);
+  }
+}
+
 // Create enhancement icons container
 const iconsContainer = document.createElement('div');
 iconsContainer.className = 'message-enhancer-icons hidden';
+chrome.storage.sync.get(['iconSize'], (settings) => {
+  const size = parseInt(settings.iconSize || '28');
+  iconsContainer.style.setProperty('--icon-size', `${size}px`);
+  const padding = size <= 26 ? 5 : size >= 30 ? 7 : 6;
+  iconsContainer.style.setProperty('--icon-padding', `${padding}px`);
+});
 iconsContainer.innerHTML = `
   <button class="enhance-icon" data-objective="clarity" data-tooltip="Enhance Clarity">
     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
@@ -116,19 +135,27 @@ document.body.appendChild(iconsContainer);
 
 // Initialize the enhancement service with settings
 function initializeEnhancementService() {
-  chrome.storage.sync.get(['apiKey', 'englishVariant'], (settings) => {
+  chrome.storage.sync.get(['apiKey', 'englishVariant', 'tone', 'model', 'iconSize'], (settings) => {
     if (settings.apiKey) {
       enhancementService = new EnhancementService(settings.apiKey);
     } else {
       console.error('OpenAI API key is not set in the extension settings.');
+    }
+    
+    // Update icon sizes if setting exists
+    if (settings.iconSize) {
+      updateIconSizes(parseInt(settings.iconSize));
     }
   });
 }
 
 // Listen for settings changes
 chrome.storage.onChanged.addListener((changes) => {
-  if (changes.apiKey || changes.englishVariant) {
+  if (changes.apiKey || changes.englishVariant || changes.tone || changes.model) {
     initializeEnhancementService();
+  }
+  if (changes.iconSize) {
+    updateIconSizes(parseInt(changes.iconSize.newValue));
   }
 });
 

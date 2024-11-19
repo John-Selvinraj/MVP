@@ -10,12 +10,14 @@
   z-index: 999999;
   opacity: 1;
   visibility: visible;
+  --icon-size: 28px;
+  --icon-padding: 6px;
 }
 
 .enhance-icon {
-  width: 28px;
-  height: 28px;
-  padding: 6px;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  padding: var(--icon-padding);
   border-radius: 4px;
   cursor: pointer;
   background: white;
@@ -26,9 +28,9 @@
   position: relative;
 }
 
-.enhance-icon img {
-  width: 20px;
-  height: 20px;
+.enhance-icon svg {
+  width: calc(var(--icon-size) - 10px);
+  height: calc(var(--icon-size) - 10px);
   opacity: 0.8;
 }
 

@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Load saved settings
-  chrome.storage.sync.get(['apiKey', 'englishVariant', 'tone'], (settings) => {
+  chrome.storage.sync.get(['apiKey', 'englishVariant', 'tone', 'model', 'iconSize'], (settings) => {
     if (settings.apiKey) {
       document.getElementById('apiKey').value = settings.apiKey;
     }
@@ -12,6 +12,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set the tone radio button
     const tone = settings.tone || 'professional';
     document.querySelector(`input[name="tone"][value="${tone}"]`).checked = true;
+
+    // Set the model radio button
+    const model = settings.model || 'gpt-3.5-turbo';
+    document.querySelector(`input[name="model"][value="${model}"]`).checked = true;
+
+    // Set the icon size radio button
+    const iconSize = settings.iconSize || '28';
+    document.querySelector(`input[name="iconSize"][value="${iconSize}"]`).checked = true;
   });
 
   // Save settings
@@ -19,11 +27,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiKey = document.getElementById('apiKey').value;
     const englishVariant = document.querySelector('input[name="englishVariant"]:checked').value;
     const tone = document.querySelector('input[name="tone"]:checked').value;
+    const model = document.querySelector('input[name="model"]:checked').value;
+    const iconSize = document.querySelector('input[name="iconSize"]:checked').value;
     
     chrome.storage.sync.set({ 
       apiKey, 
       englishVariant,
-      tone 
+      tone,
+      model,
+      iconSize
     }, () => {
       showStatus('Settings saved successfully!', 'success');
     });
