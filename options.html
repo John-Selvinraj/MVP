@@ -5,73 +5,77 @@
   <title>Message Enhancer Settings</title>
   <style>
     :root {
-      --background: 0 0% 100%;
-      --foreground: 222.2 84% 4.9%;
-      --card: 0 0% 100%;
-      --card-foreground: 222.2 84% 4.9%;
-      --popover: 0 0% 100%;
-      --popover-foreground: 222.2 84% 4.9%;
-      --primary: 222.2 47.4% 11.2%;
-      --primary-foreground: 210 40% 98%;
-      --secondary: 210 40% 96.1%;
-      --secondary-foreground: 222.2 47.4% 11.2%;
-      --muted: 210 40% 96.1%;
-      --muted-foreground: 215.4 16.3% 46.9%;
-      --accent: 210 40% 96.1%;
-      --accent-foreground: 222.2 47.4% 11.2%;
-      --border: 214.3 31.8% 91.4%;
-      --input: 214.3 31.8% 91.4%;
-      --ring: 222.2 84% 4.9%;
+      --background: 0 0% 98%;
+      --foreground: 240 10% 3.9%;
+      --primary: 240 5.9% 10%;
+      --primary-foreground: 0 0% 98%;
+      --muted: 240 4.8% 95.9%;
+      --muted-foreground: 240 3.8% 46.1%;
+      --border: 240 5.9% 90%;
+      --ring: 240 5% 64.9%;
       --radius: 0.5rem;
     }
 
     body {
       margin: 0;
-      padding: 24px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
       background: hsl(var(--background));
       color: hsl(var(--foreground));
-      max-width: 800px;
-      margin: 0 auto;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
 
     .settings-container {
+      width: 90%;
+      max-width: 480px;
       background: white;
       border-radius: 12px;
-      padding: 24px;
-      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+      padding: 32px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
     }
 
     .header {
-      margin-bottom: 24px;
+      margin-bottom: 32px;
     }
 
     h1 {
-      font-size: 24px;
+      font-size: 20px;
       font-weight: 600;
       margin: 0;
+      color: hsl(var(--foreground));
     }
 
     .description {
+      font-size: 14px;
       color: hsl(var(--muted-foreground));
       margin-top: 4px;
     }
 
     .section {
-      padding: 24px;
-      border: 1px solid hsl(var(--border));
-      border-radius: 8px;
-      margin-top: 24px;
+      margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid hsl(var(--border));
+    }
+
+    .section:last-of-type {
+      border-bottom: none;
+      margin-bottom: 32px;
+      padding-bottom: 0;
     }
 
     .section-title {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: hsl(var(--muted-foreground));
       margin-bottom: 16px;
     }
 
     .input-group {
-      margin-bottom: 16px;
+      margin-bottom: 4px;
     }
 
     .input-label {
@@ -79,29 +83,58 @@
       font-size: 14px;
       font-weight: 500;
       margin-bottom: 8px;
+      color: hsl(var(--foreground));
     }
 
     .text-input {
       width: 100%;
-      padding: 8px 12px;
-      border: 1px solid hsl(var(--input));
-      border-radius: 6px;
+      padding: 10px 12px;
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
       font-size: 14px;
+      background: transparent;
       transition: all 0.15s ease;
+      box-sizing: border-box;
     }
 
     .text-input:focus {
       outline: none;
       border-color: hsl(var(--ring));
-      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 0 2px hsl(var(--ring) / 0.1);
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 20px;
+    }
+
+    .radio-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 8px 0;
+    }
+
+    .radio-label input[type="radio"] {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .radio-label span {
+      font-size: 14px;
+      user-select: none;
     }
 
     .button {
-      padding: 8px 16px;
+      width: 100%;
+      padding: 10px;
       background: hsl(var(--primary));
       color: hsl(var(--primary-foreground));
       border: none;
-      border-radius: 6px;
+      border-radius: var(--radius);
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
@@ -114,39 +147,77 @@
 
     .status {
       margin-top: 16px;
-      padding: 8px;
-      border-radius: 6px;
+      padding: 12px;
+      border-radius: var(--radius);
       font-size: 14px;
+      text-align: center;
       display: none;
     }
 
     .status.success {
-      background: #dcfce7;
-      color: #166534;
+      background: #f0fdf4;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
     }
 
     .status.error {
-      background: #fee2e2;
+      background: #fef2f2;
       color: #991b1b;
+      border: 1px solid #fecaca;
     }
   </style>
 </head>
 <body>
   <div class="settings-container">
     <div class="header">
-      <h1>Message Enhancer Settings</h1>
-      <p class="description">Configure your extension settings and preferences.</p>
+      <h1>Message Enhancer</h1>
+      <p class="description">Configure your extension settings and preferences</p>
     </div>
 
     <div class="section">
       <h2 class="section-title">API Configuration</h2>
       <div class="input-group">
         <label class="input-label" for="apiKey">OpenAI API Key</label>
-        <input type="password" id="apiKey" class="text-input" placeholder="Enter your OpenAI API key">
+        <input type="password" id="apiKey" class="text-input" placeholder="sk-...">
       </div>
-      <button id="saveSettings" class="button">Save Settings</button>
-      <div id="status" class="status"></div>
     </div>
+
+    <div class="section">
+      <h2 class="section-title">Language Preferences</h2>
+      <div class="input-group">
+        <label class="input-label">English Variant</label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="englishVariant" value="american" checked>
+            <span>American English</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="englishVariant" value="british">
+            <span>British English</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Tone Preferences</h2>
+      <div class="input-group">
+        <label class="input-label">Writing Tone</label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="tone" value="professional" checked>
+            <span>Professional</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="tone" value="casual">
+            <span>Casual</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <button id="saveSettings" class="button">Save changes</button>
+    <div id="status" class="status"></div>
   </div>
   <script src="options.js"></script>
 </body>

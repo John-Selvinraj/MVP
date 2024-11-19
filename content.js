@@ -6,9 +6,20 @@ let lastRange = null;
 class EnhancementService {
   constructor(apiKey) {
     this.apiKey = apiKey;
+    this.englishVariant = 'american'; // default value
+    this.tone = 'professional'; // default value
+    
+    // Load the preferences
+    chrome.storage.sync.get(['englishVariant', 'tone'], (settings) => {
+      this.englishVariant = settings.englishVariant || 'american';
+      this.tone = settings.tone || 'professional';
+    });
   }
 
   async enhance(text, objective) {
+    const variantText = this.englishVariant === 'british' ? 'British English' : 'American English';
+    const toneText = this.tone === 'casual' ? 'casual and friendly' : 'professional and formal';
+    
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -20,7 +31,7 @@ class EnhancementService {
           model: 'gpt-3.5-turbo',
           messages: [{
             role: 'system',
-            content: 'You are a professional writing assistant.'
+            content: `You are a professional writing assistant that writes in ${variantText} with a ${toneText} tone. Always use ${variantText} spelling and grammar conventions while maintaining the specified tone.`
           }, {
             role: 'user',
             content: this.buildPrompt(text, objective)
@@ -52,10 +63,13 @@ class EnhancementService {
   }
 
   buildPrompt(text, objective) {
+    const variantText = this.englishVariant === 'british' ? 'British English' : 'American English';
+    const toneText = this.tone === 'casual' ? 'casual and friendly' : 'professional and formal';
+    
     const objectiveGuide = {
-      clarity: 'Enhance clarity while maintaining the main message',
-      grammar: 'Fix grammatical errors only',
-      concise: 'Make the message more concise while fixing grammatical errors'
+      clarity: `Enhance clarity while maintaining the main message, using ${variantText} spelling and a ${toneText} tone`,
+      grammar: `Fix grammatical errors using ${variantText} conventions while maintaining a ${toneText} tone`,
+      concise: `Make the message more concise while fixing grammatical errors, using ${variantText} spelling and a ${toneText} tone`
     };
 
     return `
@@ -67,6 +81,8 @@ Requirements:
 - ${objectiveGuide[objective]}
 - Maintain the original meaning
 - Keep any technical terms intact
+- Ensure all spelling and grammar follows ${variantText} conventions
+- Maintain a ${toneText} tone throughout
 - Return ONLY the revised text without any additional explanations or formatting.
 `;
   }
@@ -98,14 +114,26 @@ iconsContainer.innerHTML = `
 
 document.body.appendChild(iconsContainer);
 
-// Initialize the enhancement service with the API key from storage
-chrome.storage.sync.get(['apiKey'], (settings) => {
-  if (settings.apiKey) {
-    enhancementService = new EnhancementService(settings.apiKey);
-  } else {
-    console.error('OpenAI API key is not set in the extension settings.');
+// Initialize the enhancement service with settings
+function initializeEnhancementService() {
+  chrome.storage.sync.get(['apiKey', 'englishVariant'], (settings) => {
+    if (settings.apiKey) {
+      enhancementService = new EnhancementService(settings.apiKey);
+    } else {
+      console.error('OpenAI API key is not set in the extension settings.');
+    }
+  });
+}
+
+// Listen for settings changes
+chrome.storage.onChanged.addListener((changes) => {
+  if (changes.apiKey || changes.englishVariant) {
+    initializeEnhancementService();
   }
 });
+
+// Initialize on load
+initializeEnhancementService();
 
 // Handle selection changes to show enhancement icons
 document.addEventListener('selectionchange', () => {
