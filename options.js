@@ -1,30 +1,37 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Load saved settings
-  chrome.storage.sync.get(['apiKey', 'englishVariant', 'tone', 'model', 'iconSize', 'outputCount'], (settings) => {
-    if (settings.apiKey) {
-      document.getElementById('apiKey').value = settings.apiKey;
+  chrome.storage.sync.get(
+    ['apiKey', 'englishVariant', 'tone', 'model', 'iconSize', 'outputCount', 'showTooltips'], 
+    (settings) => {
+      if (settings.apiKey) {
+        document.getElementById('apiKey').value = settings.apiKey;
+      }
+      
+      // Set the English variant radio button
+      const variant = settings.englishVariant || 'american';
+      document.querySelector(`input[name="englishVariant"][value="${variant}"]`).checked = true;
+      
+      // Set the tone radio button
+      const tone = settings.tone || 'professional';
+      document.querySelector(`input[name="tone"][value="${tone}"]`).checked = true;
+
+      // Set the model radio button
+      const model = settings.model || 'gpt-3.5-turbo';
+      document.querySelector(`input[name="model"][value="${model}"]`).checked = true;
+
+      // Set the icon size radio button
+      const iconSize = settings.iconSize || '28';
+      document.querySelector(`input[name="iconSize"][value="${iconSize}"]`).checked = true;
+
+      // Set the output count radio button
+      const outputCount = settings.outputCount || '3';
+      document.querySelector(`input[name="outputCount"][value="${outputCount}"]`).checked = true;
+
+      // Set the tooltips toggle
+      const showTooltips = settings.showTooltips ?? true; // Default to true if not set
+      document.querySelector(`input[name="showTooltips"][value="${showTooltips}"]`).checked = true;
     }
-    
-    // Set the English variant radio button
-    const variant = settings.englishVariant || 'american';
-    document.querySelector(`input[name="englishVariant"][value="${variant}"]`).checked = true;
-    
-    // Set the tone radio button
-    const tone = settings.tone || 'professional';
-    document.querySelector(`input[name="tone"][value="${tone}"]`).checked = true;
-
-    // Set the model radio button
-    const model = settings.model || 'gpt-3.5-turbo';
-    document.querySelector(`input[name="model"][value="${model}"]`).checked = true;
-
-    // Set the icon size radio button
-    const iconSize = settings.iconSize || '28';
-    document.querySelector(`input[name="iconSize"][value="${iconSize}"]`).checked = true;
-
-    // Set the output count radio button
-    const outputCount = settings.outputCount || '1';
-    document.querySelector(`input[name="outputCount"][value="${outputCount}"]`).checked = true;
-  });
+  );
 
   // Save settings
   document.getElementById('saveSettings').addEventListener('click', () => {
@@ -34,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const model = document.querySelector('input[name="model"]:checked').value;
     const iconSize = document.querySelector('input[name="iconSize"]:checked').value;
     const outputCount = document.querySelector('input[name="outputCount"]:checked').value;
+    const showTooltips = document.querySelector('input[name="showTooltips"]:checked').value === 'true';
     
     chrome.storage.sync.set({ 
       apiKey, 
@@ -41,7 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
       tone,
       model,
       iconSize,
-      outputCount
+      outputCount,
+      showTooltips
     }, () => {
       showStatus('Settings saved successfully!', 'success');
     });

@@ -135,32 +135,18 @@
   visibility: hidden;
   transition: all 0.2s ease;
   z-index: 1000;
+  pointer-events: none;
 }
 
-/* Show tooltip on hover */
-.enhance-icon:hover::before {
+/* Only show tooltip on hover when tooltips are enabled */
+.message-enhancer-icons[data-show-tooltips="true"] .enhance-icon:hover::before {
   opacity: 1;
   visibility: visible;
 }
 
-/* Optional: Add a small arrow to the tooltip */
-.enhance-icon::after {
-  content: '';
-  position: absolute;
-  bottom: calc(100% + 4px);
-  left: 50%;
-  transform: translateX(-50%);
-  border-width: 4px;
-  border-style: solid;
-  border-color: hsl(var(--popover-foreground, 240 10% 3.9%)) transparent transparent transparent;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s ease;
-}
-
-.enhance-icon:hover::after {
-  opacity: 1;
-  visibility: visible;
+/* Hide tooltips when disabled */
+.message-enhancer-icons[data-show-tooltips="false"] .enhance-icon::before {
+  display: none;
 }
 
 .preview-navigation {
@@ -188,4 +174,30 @@
 .output-counter {
   font-size: 14px;
   color: #71717A;
+}
+
+.enhancement-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  font-size: 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  display: none;
+}
+
+.enhancement-icons-container[data-show-tooltips="true"] .enhancement-icon:hover .enhancement-tooltip {
+  opacity: 1;
+  display: block;
+}
+
+.enhancement-icons-container[data-show-tooltips="false"] .enhancement-tooltip {
+  display: none !important;
 }

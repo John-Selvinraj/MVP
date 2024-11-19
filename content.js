@@ -1,6 +1,7 @@
 // Initialize variables
 let enhancementService;
 let lastRange = null;
+let showTooltipsGlobal = true; // Default state
 
 // EnhancementService class
 class EnhancementService {
@@ -137,28 +138,48 @@ iconsContainer.innerHTML = `
 
 document.body.appendChild(iconsContainer);
 
-// Initialize the enhancement service with settings
-function initializeEnhancementService() {
-  chrome.storage.sync.get(['apiKey', 'englishVariant', 'tone', 'model', 'iconSize', 'outputCount'], (settings) => {
-    if (settings.apiKey) {
-      enhancementService = new EnhancementService(settings.apiKey);
-    } else {
-      console.error('OpenAI API key is not set in the extension settings.');
-    }
-    
-    if (settings.iconSize) {
-      updateIconSizes(parseInt(settings.iconSize));
-    }
-  });
+// Add this function to handle tooltip visibility
+function updateTooltipVisibility() {
+  const iconsContainer = document.querySelector('.message-enhancer-icons');
+  if (iconsContainer) {
+    iconsContainer.setAttribute('data-show-tooltips', showTooltipsGlobal.toString());
+  }
 }
 
-// Listen for settings changes
+// Update the initialization code
+function initializeEnhancementService() {
+  chrome.storage.sync.get(
+    ['apiKey', 'englishVariant', 'tone', 'model', 'iconSize', 'outputCount', 'showTooltips'], 
+    (settings) => {
+      if (settings.apiKey) {
+        enhancementService = new EnhancementService(settings.apiKey);
+      } else {
+        console.error('OpenAI API key is not set in the extension settings.');
+      }
+      
+      if (settings.iconSize) {
+        updateIconSizes(parseInt(settings.iconSize));
+      }
+
+      // Update global tooltip state
+      showTooltipsGlobal = settings.showTooltips ?? true;
+      updateTooltipVisibility();
+    }
+  );
+}
+
+// Update the storage change listener
 chrome.storage.onChanged.addListener((changes) => {
-  if (changes.apiKey || changes.englishVariant || changes.tone || changes.model || changes.outputCount) {
+  if (changes.apiKey || changes.englishVariant || changes.tone || 
+      changes.model || changes.outputCount) {
     initializeEnhancementService();
   }
   if (changes.iconSize) {
     updateIconSizes(parseInt(changes.iconSize.newValue));
+  }
+  if (changes.showTooltips) {
+    showTooltipsGlobal = changes.showTooltips.newValue;
+    updateTooltipVisibility();
   }
 });
 
@@ -362,3 +383,18 @@ function showError(message) {
   document.body.appendChild(error);
   setTimeout(() => error.remove(), 3000);
 }
+// When creating enhancement icons, add a class for tooltips
+function createEnhancementIcon(objective, tooltip) {
+  const icon = document.createElement('div');
+  icon.className = 'enhancement-icon';
+  
+  const tooltipElement = document.createElement('span');
+  tooltipElement.className = 'enhancement-tooltip';
+  tooltipElement.textContent = tooltip;
+  
+  icon.appendChild(tooltipElement);
+  icon.addEventListener('click', () => handleEnhancement(objective));
+  
+  return icon;
+}
+
