@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Load saved settings
-  chrome.storage.sync.get(['apiKey', 'englishVariant', 'tone', 'model', 'iconSize'], (settings) => {
+  chrome.storage.sync.get(['apiKey', 'englishVariant', 'tone', 'model', 'iconSize', 'outputCount'], (settings) => {
     if (settings.apiKey) {
       document.getElementById('apiKey').value = settings.apiKey;
     }
@@ -20,6 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set the icon size radio button
     const iconSize = settings.iconSize || '28';
     document.querySelector(`input[name="iconSize"][value="${iconSize}"]`).checked = true;
+
+    // Set the output count radio button
+    const outputCount = settings.outputCount || '1';
+    document.querySelector(`input[name="outputCount"][value="${outputCount}"]`).checked = true;
   });
 
   // Save settings
@@ -29,13 +33,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const tone = document.querySelector('input[name="tone"]:checked').value;
     const model = document.querySelector('input[name="model"]:checked').value;
     const iconSize = document.querySelector('input[name="iconSize"]:checked').value;
+    const outputCount = document.querySelector('input[name="outputCount"]:checked').value;
     
     chrome.storage.sync.set({ 
       apiKey, 
       englishVariant,
       tone,
       model,
-      iconSize
+      iconSize,
+      outputCount
     }, () => {
       showStatus('Settings saved successfully!', 'success');
     });

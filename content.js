@@ -9,12 +9,14 @@ class EnhancementService {
     this.englishVariant = 'american';
     this.tone = 'professional';
     this.model = 'gpt-3.5-turbo';
+    this.outputCount = '1';
     
     // Load the preferences
-    chrome.storage.sync.get(['englishVariant', 'tone', 'model'], (settings) => {
+    chrome.storage.sync.get(['englishVariant', 'tone', 'model', 'outputCount'], (settings) => {
       this.englishVariant = settings.englishVariant || 'american';
       this.tone = settings.tone || 'professional';
       this.model = settings.model || 'gpt-3.5-turbo';
+      this.outputCount = settings.outputCount || '1';
     });
   }
 
@@ -38,28 +40,30 @@ class EnhancementService {
             role: 'user',
             content: this.buildPrompt(text, objective)
           }],
-          temperature: 0.7
+          temperature: 0.7,
+          n: parseInt(this.outputCount) // Convert string to number
         })
       });
-
+  
       const data = await response.json();
-      if (!data.choices?.[0]?.message?.content) {
+      if (!data.choices?.length) {
         throw new Error('Invalid API response');
       }
       
-      let content = data.choices[0].message.content;
-
-      // Post-processing to remove unwanted quotation marks and normalize whitespace
-      content = content.replace(/```(?:\w+)?\n?([\s\S]*?)\n?```/g, '$1'); // Remove code blocks if present
-      content = content.replace(/["']/g, ''); // Remove quotation marks
-      content = content
-        .split('\n')
-        .map(line => line.trim())
-        .join('\n')
-        .replace(/\n{2,}/g, '\n\n'); // Normalize whitespace and preserve paragraphs
-
-      return content.trim();
+      // Return array of processed outputs
+      return data.choices.map(choice => {
+        let content = choice.message.content;
+        content = content.replace(/```(?:\w+)?\n?([\s\S]*?)\n?```/g, '$1');
+        content = content.replace(/["']/g, '');
+        content = content
+          .split('\n')
+          .map(line => line.trim())
+          .join('\n')
+          .replace(/\n{2,}/g, '\n\n');
+        return content.trim();
+      });
     } catch (error) {
+      console.error('API Error:', error);
       throw new Error(`Enhancement failed: ${error.message}`);
     }
   }
@@ -135,14 +139,13 @@ document.body.appendChild(iconsContainer);
 
 // Initialize the enhancement service with settings
 function initializeEnhancementService() {
-  chrome.storage.sync.get(['apiKey', 'englishVariant', 'tone', 'model', 'iconSize'], (settings) => {
+  chrome.storage.sync.get(['apiKey', 'englishVariant', 'tone', 'model', 'iconSize', 'outputCount'], (settings) => {
     if (settings.apiKey) {
       enhancementService = new EnhancementService(settings.apiKey);
     } else {
       console.error('OpenAI API key is not set in the extension settings.');
     }
     
-    // Update icon sizes if setting exists
     if (settings.iconSize) {
       updateIconSizes(parseInt(settings.iconSize));
     }
@@ -151,7 +154,7 @@ function initializeEnhancementService() {
 
 // Listen for settings changes
 chrome.storage.onChanged.addListener((changes) => {
-  if (changes.apiKey || changes.englishVariant || changes.tone || changes.model) {
+  if (changes.apiKey || changes.englishVariant || changes.tone || changes.model || changes.outputCount) {
     initializeEnhancementService();
   }
   if (changes.iconSize) {
@@ -219,12 +222,14 @@ async function handleEnhancement(objective) {
     }
 
     enhancementService.apiKey = settings.apiKey;
-    const enhanced = await enhancementService.enhance(selectedText, objective);
+    const enhancedOutputs = await enhancementService.enhance(selectedText, objective);
 
-    if (await showPreview(selectedText, enhanced)) {
-      await replaceSelectedText(enhanced);
+    const selectedOutput = await showPreview(selectedText, enhancedOutputs);
+    if (selectedOutput) {
+      await replaceSelectedText(selectedOutput);
     }
   } catch (error) {
+    console.error('Enhancement error:', error);
     showError('Failed to enhance text: ' + error.message);
   } finally {
     iconsContainer.classList.add('hidden');
@@ -269,26 +274,66 @@ async function replaceSelectedText(newText) {
 
   lastRange = null;
 }
-function showPreview(original, enhanced) {
+function showPreview(original, enhancedOutputs) {
   return new Promise((resolve) => {
     const preview = document.createElement('div');
     preview.className = 'message-enhancer-preview';
     
-    // Clean up the enhanced text for preview
-    const cleanedEnhanced = enhanced.trim().replace(/^\n+|\n+$/g, '');
+    let currentIndex = 0;
+    const totalOutputs = enhancedOutputs.length;
     
-    preview.innerHTML = `
-      <div class="preview-content">
+    function updatePreviewContent() {
+      const previewContent = document.querySelector('.preview-content');
+      const outputText = enhancedOutputs[currentIndex];
+      const navigationHTML = totalOutputs > 1 ? `
+        <div class="preview-navigation">
+          <button class="nav-btn prev" ${currentIndex === 0 ? 'disabled' : ''}>←</button>
+          <span class="output-counter">${currentIndex + 1}/${totalOutputs}</span>
+          <button class="nav-btn next" ${currentIndex === totalOutputs - 1 ? 'disabled' : ''}>→</button>
+        </div>
+      ` : '';
+
+      previewContent.innerHTML = `
         <h3>Message Enhancement Preview</h3>
-        <div class="preview-text">${cleanedEnhanced.replace(/\n/g, '<br>')}</div>
+        ${navigationHTML}
+        <div class="preview-text">${outputText.replace(/\n/g, '<br>')}</div>
         <div class="preview-actions">
           <button class="cancel-btn">Cancel</button>
           <button class="apply-btn">Apply Changes</button>
         </div>
-      </div>
-    `;
+      `;
 
+      // Reattach event listeners
+      if (totalOutputs > 1) {
+        previewContent.querySelector('.prev')?.addEventListener('click', () => {
+          if (currentIndex > 0) {
+            currentIndex--;
+            updatePreviewContent();
+          }
+        });
+
+        previewContent.querySelector('.next')?.addEventListener('click', () => {
+          if (currentIndex < totalOutputs - 1) {
+            currentIndex++;
+            updatePreviewContent();
+          }
+        });
+      }
+
+      previewContent.querySelector('.cancel-btn').onclick = () => {
+        preview.remove();
+        resolve(false);
+      };
+
+      previewContent.querySelector('.apply-btn').onclick = () => {
+        preview.remove();
+        resolve(enhancedOutputs[currentIndex]);
+      };
+    }
+
+    preview.innerHTML = '<div class="preview-content"></div>';
     document.body.appendChild(preview);
+    updatePreviewContent();
 
     // Close on clicking outside
     preview.addEventListener('click', (e) => {
@@ -307,16 +352,6 @@ function showPreview(original, enhanced) {
       }
     }
     document.addEventListener('keydown', escapeHandler);
-
-    preview.querySelector('.cancel-btn').onclick = () => {
-      preview.remove();
-      resolve(false);
-    };
-
-    preview.querySelector('.apply-btn').onclick = () => {
-      preview.remove();
-      resolve(true);
-    };
   });
 }
 
