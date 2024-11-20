@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       checkExtensionContext();
 
-      // Split settings between sync and local storage
       const syncSettings = {
         model: document.querySelector('input[name="model"]:checked')?.value || 'gpt-3.5-turbo',
         englishVariant: document.querySelector('input[name="englishVariant"]:checked')?.value || 'american',
@@ -35,7 +34,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         iconSize: document.querySelector('input[name="iconSize"]:checked')?.value || 'medium'
       };
 
-      const apiKey = document.getElementById('apiKey')?.value || '';
+      // Get API key and trim whitespace
+      const apiKey = (document.getElementById('apiKey')?.value || '').trim();
 
       // Save settings
       await Promise.all([
@@ -59,9 +59,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (error) {
       console.error('Error saving settings:', error);
-      if (error.message.includes('Extension context invalidated')) {
-        alert('Please refresh the page to restore extension functionality.');
-      }
     }
   };
 
@@ -81,6 +78,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       debounceTimeout = setTimeout(saveSettings, 500);
     });
+
+    // Also save on blur for API key
+    apiKeyInput.addEventListener('blur', saveSettings);
   };
 
   // Initial load

@@ -422,3 +422,47 @@ function createEnhancementIcon(objective, tooltip) {
   
   return icon;
 }
+
+// Function to get settings including API key
+async function getSettings() {
+  try {
+    const [syncSettings, localSettings] = await Promise.all([
+      chrome.storage.sync.get({
+        model: 'gpt-3.5-turbo',
+        englishVariant: 'american',
+        tone: 'casual',
+        showTooltips: true,
+        outputCount: '3',
+        iconSize: 'medium'
+      }),
+      chrome.storage.local.get({
+        apiKey: ''
+      })
+    ]);
+
+    return { ...syncSettings, ...localSettings };
+  } catch (error) {
+    console.error('Error getting settings:', error);
+    return null;
+  }
+}
+
+// Function to check if API key is set
+async function checkApiKey() {
+  const settings = await getSettings();
+  const apiKey = settings?.apiKey?.trim() || '';
+  return apiKey.length > 0;
+}
+
+// When making API calls
+async function makeApiCall() {
+  const settings = await getSettings();
+  const apiKey = settings?.apiKey?.trim();
+  
+  if (!apiKey) {
+    throw new Error('OpenAI API key is not set in the extension settings.');
+  }
+
+  // Make your API call using the apiKey
+  // ...
+}

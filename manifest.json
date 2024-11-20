@@ -5,10 +5,10 @@
   "description": "Enhance your text with AI-powered improvements",
   "permissions": [
     "storage",
-    "activeTab"
+    "tabs"
   ],
   "host_permissions": [
-    "https://*.slack.com/*"
+    "<all_urls>"
   ],
   "action": {
     "default_popup": "popup.html",
