@@ -136,7 +136,7 @@ ${[...baseRequirements, ...specificRequirements].map(req => `- ${req}`).join('\n
   }
 }
 
-// Add this function to update icon sizes
+// Function to update icon sizes
 function updateIconSizes(size) {
   const icons = document.querySelector('.message-enhancer-icons');
   if (icons) {
@@ -151,10 +151,8 @@ function updateIconSizes(size) {
 const iconsContainer = document.createElement('div');
 iconsContainer.className = 'message-enhancer-icons hidden';
 chrome.storage.sync.get(['iconSize'], (settings) => {
-  const size = parseInt(settings.iconSize || '28');
-  iconsContainer.style.setProperty('--icon-size', `${size}px`);
-  const padding = size <= 26 ? 5 : size >= 30 ? 7 : 6;
-  iconsContainer.style.setProperty('--icon-padding', `${padding}px`);
+  const size = typeof settings.iconSize === 'number' ? settings.iconSize : 28; // default to medium (28px)
+  updateIconSizes(size);
 });
 iconsContainer.innerHTML = `
   <button class="enhance-icon" data-objective="clarity" data-tooltip="Enhance Clarity">
@@ -179,7 +177,7 @@ iconsContainer.innerHTML = `
 
 document.body.appendChild(iconsContainer);
 
-// Add this function to handle tooltip visibility
+// Function to handle tooltip visibility
 function updateTooltipVisibility() {
   const iconsContainer = document.querySelector('.message-enhancer-icons');
   if (iconsContainer) {
@@ -187,19 +185,21 @@ function updateTooltipVisibility() {
   }
 }
 
-// Update the initialization code
+// Initialize EnhancementService
 function initializeEnhancementService() {
   chrome.storage.sync.get(
     ['apiKey', 'englishVariant', 'tone', 'model', 'iconSize', 'outputCount', 'showTooltips'], 
     (settings) => {
       if (settings.apiKey) {
-        enhancementService = new EnhancementService(settings.apiKey);
+        enhancementService = new EnhancementService();
       } else {
         console.error('OpenAI API key is not set in the extension settings.');
       }
       
-      if (settings.iconSize) {
+      if (settings.iconSize && !isNaN(parseInt(settings.iconSize))) {
         updateIconSizes(parseInt(settings.iconSize));
+      } else {
+        updateIconSizes(28); // Default size
       }
 
       // Update global tooltip state
@@ -216,7 +216,10 @@ chrome.storage.onChanged.addListener((changes) => {
     initializeEnhancementService();
   }
   if (changes.iconSize) {
-    updateIconSizes(parseInt(changes.iconSize.newValue));
+    const newSize = parseInt(changes.iconSize.newValue);
+    if (!isNaN(newSize)) {
+      updateIconSizes(newSize);
+    }
   }
   if (changes.showTooltips) {
     showTooltipsGlobal = changes.showTooltips.newValue;
@@ -296,6 +299,7 @@ async function handleEnhancement(objective) {
     iconsContainer.classList.add('hidden');
   }
 }
+
 async function replaceSelectedText(newText) {
   if (!lastRange) return;
 
@@ -424,11 +428,11 @@ function showError(message) {
   document.body.appendChild(error);
   setTimeout(() => error.remove(), 3000);
 }
+
 // Function to validate API key
 const isValidApiKey = (apiKey) => {
   return apiKey && typeof apiKey === 'string' && apiKey.trim().startsWith('sk-');
 };
-
 // Function to get settings including API key
 async function getSettings() {
   try {
@@ -438,7 +442,7 @@ async function getSettings() {
         tone: 'casual',
         showTooltips: true,
         outputCount: '3',
-        iconSize: 'medium'
+        iconSize: 28 // Default to 28px instead of 'medium'
       }),
       chrome.storage.local.get({
         apiKey: ''
@@ -451,11 +455,48 @@ async function getSettings() {
     return null;
   }
 }
+
+// When making API calls
+async function makeApiCall() {
+  const settings = await getSettings();
+  const apiKey = settings?.apiKey?.trim() || '';
+  
+  if (!isValidApiKey(apiKey)) {
+    throw new Error('Please set a valid OpenAI API key in the extension settings.');
+  }
+
+  try {
+    // Make your API call using the apiKey
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        // ... your request body
+      })
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Invalid API key. Please check your OpenAI API key in the extension settings.');
+      }
+      throw new Error('API request failed. Please try again.');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error:', error);
+    throw error;
+  }
+}
+
 // Add listener for settings updates
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'settingsUpdated') {
     // Clear any cached API key or settings
-    cachedSettings = null;
+    // Assuming you have a cachedSettings variable, otherwise remove this line
+    // cachedSettings = null;
   }
 });
-

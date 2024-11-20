@@ -49,12 +49,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       checkExtensionContext();
 
+      const iconSizeMap = {
+        small: 24,
+        medium: 28,
+        large: 32
+      };
+
       const syncSettings = {
         englishVariant: document.querySelector('input[name="englishVariant"]:checked')?.value || 'american',
         tone: document.querySelector('input[name="tone"]:checked')?.value || 'casual',
         showTooltips: document.querySelector('input[name="showTooltips"]:checked')?.value === 'true',
         outputCount: document.querySelector('input[name="outputCount"]:checked')?.value || '3',
-        iconSize: document.querySelector('input[name="iconSize"]:checked')?.value || 'medium'
+        iconSize: iconSizeMap[document.querySelector('input[name="iconSize"]:checked')?.value || 'medium']
       };
 
       // Handle API key
@@ -167,7 +173,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         tone: 'casual',
         showTooltips: true,
         outputCount: '3',
-        iconSize: 'medium'
+        iconSize: 28
       }),
       chrome.storage.local.get({
         apiKey: ''
