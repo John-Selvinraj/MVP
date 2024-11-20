@@ -260,6 +260,9 @@ iconsContainer.querySelectorAll('.enhance-icon').forEach(icon => {
 
 async function handleEnhancement(objective) {
   if (!lastRange) return;
+  if (!enhancementService) {
+    enhancementService = new EnhancementService();
+  }
 
   const selection = window.getSelection();
   const selectedText = selection.toString().trim();
