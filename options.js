@@ -63,7 +63,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       checkExtensionContext();
 
       const syncSettings = {
-        model: document.querySelector('input[name="model"]:checked')?.value || 'gpt-3.5-turbo',
         englishVariant: document.querySelector('input[name="englishVariant"]:checked')?.value || 'american',
         tone: document.querySelector('input[name="tone"]:checked')?.value || 'casual',
         showTooltips: document.querySelector('input[name="showTooltips"]:checked')?.value === 'true',
@@ -177,7 +176,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const [syncSettings, localSettings] = await Promise.all([
       chrome.storage.sync.get({
-        model: 'gpt-3.5-turbo',
         englishVariant: 'american',
         tone: 'casual',
         showTooltips: true,
@@ -206,7 +204,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // Set radio buttons
-    setRadioButton('model', syncSettings.model);
     setRadioButton('englishVariant', syncSettings.englishVariant);
     setRadioButton('tone', syncSettings.tone);
     setRadioButton('showTooltips', syncSettings.showTooltips.toString());

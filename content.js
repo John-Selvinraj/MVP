@@ -8,14 +8,14 @@ class EnhancementService {
   constructor() {
     this.englishVariant = 'american';
     this.tone = 'professional';
-    this.model = 'gpt-3.5-turbo';
+    this.model = 'gpt-4o-mini';
     this.outputCount = '1';
     
     // Load the preferences
     chrome.storage.sync.get(['englishVariant', 'tone', 'model', 'outputCount'], (settings) => {
       this.englishVariant = settings.englishVariant || 'american';
       this.tone = settings.tone || 'professional';
-      this.model = settings.model || 'gpt-3.5-turbo';
+      this.model = settings.model || 'gpt-4o-mini';
       this.outputCount = settings.outputCount || '1';
     });
   }
@@ -439,7 +439,6 @@ function createEnhancementIcon(objective, tooltip) {
   
   return icon;
 }
-
 // Function to validate API key
 const isValidApiKey = (apiKey) => {
   return apiKey && typeof apiKey === 'string' && apiKey.trim().startsWith('sk-');
@@ -450,7 +449,6 @@ async function getSettings() {
   try {
     const [syncSettings, localSettings] = await Promise.all([
       chrome.storage.sync.get({
-        model: 'gpt-3.5-turbo',
         englishVariant: 'american',
         tone: 'casual',
         showTooltips: true,
@@ -512,3 +510,4 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     cachedSettings = null;
   }
 });
+
