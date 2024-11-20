@@ -175,29 +175,3 @@
   font-size: 14px;
   color: #71717A;
 }
-
-.enhancement-tooltip {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 8px;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  font-size: 12px;
-  border-radius: 4px;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s;
-  display: none;
-}
-
-.enhancement-icons-container[data-show-tooltips="true"] .enhancement-icon:hover .enhancement-tooltip {
-  opacity: 1;
-  display: block;
-}
-
-.enhancement-icons-container[data-show-tooltips="false"] .enhancement-tooltip {
-  display: none !important;
-}

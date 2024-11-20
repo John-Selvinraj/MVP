@@ -20,19 +20,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 2000);
   };
 
-  // Function to clear all storage
-  const clearStorage = async () => {
-    try {
-      await Promise.all([
-        chrome.storage.local.clear(),
-        chrome.storage.sync.clear()
-      ]);
-      console.log('Storage cleared successfully');
-    } catch (error) {
-      console.error('Error clearing storage:', error);
-    }
-  };
-
   const verifyApiKey = async (apiKey) => {
     if (!apiKey) return false;
     if (!apiKey.startsWith('sk-')) return false;

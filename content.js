@@ -436,21 +436,6 @@ function showError(message) {
   document.body.appendChild(error);
   setTimeout(() => error.remove(), 3000);
 }
-
-// When creating enhancement icons, add a class for tooltips
-function createEnhancementIcon(objective, tooltip) {
-  const icon = document.createElement('div');
-  icon.className = 'enhancement-icon';
-  
-  const tooltipElement = document.createElement('span');
-  tooltipElement.className = 'enhancement-tooltip';
-  tooltipElement.textContent = tooltip;
-  
-  icon.appendChild(tooltipElement);
-  icon.addEventListener('click', () => handleEnhancement(objective));
-  
-  return icon;
-}
 // Function to validate API key
 const isValidApiKey = (apiKey) => {
   return apiKey && typeof apiKey === 'string' && apiKey.trim().startsWith('sk-');
@@ -478,43 +463,6 @@ async function getSettings() {
     return null;
   }
 }
-
-// When making API calls
-async function makeApiCall() {
-  const settings = await getSettings();
-  const apiKey = settings?.apiKey?.trim() || '';
-  
-  if (!isValidApiKey(apiKey)) {
-    throw new Error('Please set a valid OpenAI API key in the extension settings.');
-  }
-
-  try {
-    // Make your API call using the apiKey
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        // ... your request body
-      })
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Invalid API key. Please check your OpenAI API key in the extension settings.');
-      }
-      throw new Error('API request failed. Please try again.');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('API call error:', error);
-    throw error;
-  }
-}
-
 // Add listener for settings updates
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'settingsUpdated') {
