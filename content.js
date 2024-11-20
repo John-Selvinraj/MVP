@@ -1,3 +1,15 @@
+const getIconSizeInPixels = (size) => {
+  switch (size) {
+    case 'small':
+      return 24;
+    case 'large':
+      return 32;
+    case 'medium':
+    default:
+      return 28;
+  }
+};
+
 // Initialize variables
 let enhancementService;
 let lastRange = null;
@@ -140,9 +152,10 @@ ${[...baseRequirements, ...specificRequirements].map(req => `- ${req}`).join('\n
 function updateIconSizes(size) {
   const icons = document.querySelector('.message-enhancer-icons');
   if (icons) {
-    icons.style.setProperty('--icon-size', `${size}px`);
+    const pixelSize = typeof size === 'number' ? size : getIconSizeInPixels(size);
+    icons.style.setProperty('--icon-size', `${pixelSize}px`);
     // Adjust padding based on icon size
-    const padding = size <= 26 ? 5 : size >= 30 ? 7 : 6;
+    const padding = pixelSize <= 26 ? 5 : pixelSize >= 30 ? 7 : 6;
     icons.style.setProperty('--icon-padding', `${padding}px`);
   }
 }
@@ -151,10 +164,8 @@ function updateIconSizes(size) {
 const iconsContainer = document.createElement('div');
 iconsContainer.className = 'message-enhancer-icons hidden';
 chrome.storage.sync.get(['iconSize'], (settings) => {
-  const size = parseInt(settings.iconSize || '28');
-  iconsContainer.style.setProperty('--icon-size', `${size}px`);
-  const padding = size <= 26 ? 5 : size >= 30 ? 7 : 6;
-  iconsContainer.style.setProperty('--icon-padding', `${padding}px`);
+  const size = settings.iconSize || 'medium';
+  updateIconSizes(size);
 });
 iconsContainer.innerHTML = `
   <button class="enhance-icon" data-objective="clarity" data-tooltip="Enhance Clarity">
@@ -216,7 +227,8 @@ chrome.storage.onChanged.addListener((changes) => {
     initializeEnhancementService();
   }
   if (changes.iconSize) {
-    updateIconSizes(parseInt(changes.iconSize.newValue));
+    const newSize = changes.iconSize.newValue;
+    updateIconSizes(newSize);
   }
   if (changes.showTooltips) {
     showTooltipsGlobal = changes.showTooltips.newValue;
@@ -510,4 +522,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     cachedSettings = null;
   }
 });
-
