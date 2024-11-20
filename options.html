@@ -4,373 +4,428 @@
   <meta charset="UTF-8">
   <title>Message Enhancer Settings</title>
   <style>
+    /* ... keeping the root variables the same ... */
+
     :root {
-      --background: 0 0% 98%;
-      --foreground: 240 10% 3.9%;
-      --primary: 240 5.9% 10%;
-      --primary-foreground: 0 0% 98%;
-      --muted: 240 4.8% 95.9%;
-      --muted-foreground: 240 3.8% 46.1%;
-      --border: 240 5.9% 90%;
-      --ring: 240 5% 64.9%;
-      --radius: 0.5rem;
+      /* Add new semantic color variables */
+      --heading-color: #0f172a;      /* Darker for main headings */
+      --subheading-color: #1e293b;   /* Slightly lighter for section titles */
+      --label-color: #334155;        /* For setting labels */
+      --description-color: #64748b;  /* For descriptions */
+      --placeholder-color: #94a3b8;  /* For input placeholders */
     }
 
     body {
       margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
       background: hsl(var(--background));
       color: hsl(var(--foreground));
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       -webkit-font-smoothing: antialiased;
     }
 
-    .settings-container {
-      width: 90%;
-      max-width: 480px;
-      background: white;
-      border-radius: 12px;
-      padding: 32px;
-      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
     }
 
-    .header {
+    .page-header {
       margin-bottom: 32px;
     }
 
-    h1 {
-      font-size: 20px;
+    .page-title {
+      font-size: 24px;
       font-weight: 600;
+      margin: 0 0 8px 0;
+      color: var(--heading-color);
+      letter-spacing: -0.02em;
+    }
+
+    .page-description {
+      font-size: 16px;
+      color: var(--description-color);
       margin: 0;
-      color: hsl(var(--foreground));
+      line-height: 1.5;
     }
 
-    .description {
-      font-size: 14px;
-      color: hsl(var(--muted-foreground));
-      margin-top: 4px;
+    .settings-section {
+      margin-bottom: 32px;
     }
 
-    .section {
-      margin-bottom: 24px;
-      padding-bottom: 24px;
+    .section-header {
+      padding-bottom: 16px;
+      margin-bottom: 20px;
       border-bottom: 1px solid hsl(var(--border));
     }
 
-    .section:last-of-type {
-      border-bottom: none;
-      margin-bottom: 32px;
-      padding-bottom: 0;
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0 0 6px 0;
+      color: var(--subheading-color);
+      letter-spacing: -0.01em;
     }
 
-    .section-title {
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: hsl(var(--muted-foreground));
+    .section-description {
+      font-size: 14px;
+      color: var(--description-color);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .settings-grid {
+      display: grid;
+      gap: 16px;
+      margin: 0;
+      padding: 0;
+    }
+
+    .setting-item {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      align-items: start;
+      gap: 20px;
       margin-bottom: 16px;
     }
 
-    .input-group {
-      margin-bottom: 4px;
-    }
-
-    .input-label {
-      display: block;
-      font-size: 14px;
+    .setting-item-label {
+      font-size: 15px;
       font-weight: 500;
-      margin-bottom: 8px;
-      color: hsl(var(--foreground));
+      color: var(--label-color);
+      margin-bottom: 2px;
     }
 
-    .text-input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid hsl(var(--border));
-      border-radius: var(--radius);
+    .setting-item-description {
       font-size: 14px;
-      background: transparent;
-      transition: all 0.15s ease;
-      box-sizing: border-box;
-    }
-
-    .text-input:focus {
-      outline: none;
-      border-color: hsl(var(--ring));
-      box-shadow: 0 0 0 2px hsl(var(--ring) / 0.1);
+      color: var(--description-color);
+      margin-top: 2px;
+      line-height: 1.4;
     }
 
     .radio-group {
       display: flex;
-      gap: 20px;
+      align-items: center;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+      width: 100%;
+      background: white;
+      margin: 0;
+      padding: 0;
+      height: 32px;
     }
 
     .radio-label {
+      flex: 1;
+      margin: 0;
+      padding: 0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--label-color);
       display: flex;
       align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      padding: 8px 0;
+      justify-content: center;
+      height: 100%;
+    }
+
+    .radio-label:not(:last-child) {
+      border-right: 1px solid #e2e8f0;
     }
 
     .radio-label input[type="radio"] {
-      width: 16px;
-      height: 16px;
-      margin: 0;
-      cursor: pointer;
+      display: none;
     }
 
-    .radio-label span {
-      font-size: 14px;
-      user-select: none;
+    .radio-label input[type="radio"]:checked + span {
+      color: var(--label-color);
+      font-weight: 500;
+      background: #f1f5f9;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    .radio-label:hover:not(input[type="radio"]:checked + span) {
+      background: #f8fafc;
     }
 
     .button {
       width: 100%;
       padding: 10px;
-      background: hsl(var(--primary));
-      color: hsl(var(--primary-foreground));
+      background: #0f172a;
+      color: white;
       border: none;
-      border-radius: var(--radius);
+      border-radius: 8px;
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
       transition: all 0.15s ease;
+      letter-spacing: 0.01em;
     }
 
     .button:hover {
-      opacity: 0.9;
+      background: #1e293b;
     }
 
-    .status {
-      margin-top: 16px;
-      padding: 12px;
-      border-radius: var(--radius);
-      font-size: 14px;
-      text-align: center;
-      display: none;
+    .save-message {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.2s ease;
+      z-index: 1000;
     }
 
-    .status.success {
-      background: #f0fdf4;
-      color: #15803d;
-      border: 1px solid #bbf7d0;
-    }
-
-    .status.error {
-      background: #fef2f2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
-    }
-
-    .toggle-group {
+    .save-message-content {
       display: flex;
       align-items: center;
-    }
-
-    .toggle-switch {
-      position: relative;
-      display: inline-block;
-      width: 48px;
-      height: 24px;
-    }
-
-    .toggle-switch input[type="checkbox"] {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .toggle-slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #ccc;
-      -webkit-transition: .4s;
-      transition: .4s;
-    }
-
-    .toggle-slider:before {
-      position: absolute;
-      content: "";
-      height: 20px;
-      width: 20px;
-      left: 2px;
-      bottom: 2px;
+      gap: 8px;
       background-color: white;
-      -webkit-transition: .4s;
-      transition: .4s;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 10px 14px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-width: 180px;
     }
 
-    .toggle-switch input:checked + .toggle-slider {
-      background-color: #2196F3;
+    .save-message-icon {
+      color: #059669;
+      font-size: 14px;
+      font-weight: bold;
     }
 
-    .toggle-switch input:focus + .toggle-slider {
-      box-shadow: 0 0 1px #2196F3;
+    .save-message-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
     }
 
-    .toggle-switch input:checked + .toggle-slider:before {
-      -webkit-transform: translateX(26px);
-      -ms-transform: translateX(26px);
-      transform: translateX(26px);
+    .save-message.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
 
-    .toggle-slider.round {
-      border-radius: 34px;
+    .text-input {
+      width: 100%;
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      color: var(--heading-color);
+      transition: all 0.15s ease;
+      box-sizing: border-box;
+      font-weight: 500;
     }
 
-    .toggle-slider.round:before {
-      border-radius: 50%;
+    .text-input:focus {
+      outline: none;
+      border-color: #94a3b8;
+      box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.1);
+    }
+
+    .text-input::placeholder {
+      color: var(--placeholder-color);
+      font-weight: normal;
+    }
+
+    .setting-item > input,
+    .setting-item > .radio-group {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    /* Add spacing between settings */
+    .settings-section {
+      margin-bottom: 48px;
+    }
+
+    .setting-item {
+      margin-bottom: 24px;
+    }
+
+    /* Add subtle transitions */
+    .radio-label,
+    .text-input,
+    .button {
+      transition: all 0.2s ease;
     }
   </style>
 </head>
 <body>
-  <div class="settings-container">
-    <div class="header">
-      <h1>Message Enhancer</h1>
-      <p class="description">Configure your extension settings and preferences</p>
-    </div>
+  <div class="container">
+    <header class="page-header">
+      <h1 class="page-title">Settings</h1>
+      <p class="page-description">Manage your message enhancement preferences and API configuration.</p>
+    </header>
 
-    <div class="section">
-      <h2 class="section-title">API Configuration</h2>
-      <div class="input-group">
-        <label class="input-label" for="apiKey">OpenAI API Key</label>
-        <input type="password" id="apiKey" class="text-input" placeholder="sk-...">
+    <div class="settings-section">
+      <div class="section-header">
+        <h2 class="section-title">API Configuration</h2>
+        <p class="section-description">Configure your OpenAI API settings for message enhancement.</p>
       </div>
-    </div>
+      
+      <div class="settings-grid">
+        <div class="setting-item">
+          <div>
+            <div class="setting-item-label">OpenAI API Key</div>
+            <div class="setting-item-description">Your API key for accessing OpenAI services.</div>
+          </div>
+          <input type="password" id="apiKey" class="text-input" placeholder="sk-...">
+        </div>
 
-    <div class="section">
-      <h2 class="section-title">Language Preferences</h2>
-      <div class="input-group">
-        <label class="input-label">English Variant</label>
-        <div class="radio-group">
-          <label class="radio-label">
-            <input type="radio" name="englishVariant" value="american" checked>
-            <span>American English</span>
-          </label>
-          <label class="radio-label">
-            <input type="radio" name="englishVariant" value="british">
-            <span>British English</span>
-          </label>
+        <div class="setting-item">
+          <div>
+            <div class="setting-item-label">Model Selection</div>
+            <div class="setting-item-description">Choose which OpenAI model to use for enhancements.</div>
+          </div>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="model" value="gpt-3.5-turbo" checked>
+              <span>GPT-3.5 Turbo</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="model" value="gpt-4-turbo">
+              <span>GPT-4 Turbo</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="model" value="gpt-4">
+              <span>GPT-4</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-item-label">Number of Outputs</div>
+            <div class="setting-item-description">Choose how many alternative suggestions to generate.</div>
+          </div>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="outputCount" value="1">
+              <span>1</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="outputCount" value="2">
+              <span>2</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="outputCount" value="3" checked>
+              <span>3</span>
+            </label>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="section">
-      <h2 class="section-title">Tone Preferences</h2>
-      <div class="input-group">
-        <label class="input-label">Writing Tone</label>
-        <div class="radio-group">
-          <label class="radio-label">
-            <input type="radio" name="tone" value="professional" checked>
-            <span>Professional</span>
-          </label>
-          <label class="radio-label">
-            <input type="radio" name="tone" value="casual">
-            <span>Casual</span>
-          </label>
+    <div class="settings-section">
+      <div class="section-header">
+        <h2 class="section-title">Language Preferences</h2>
+        <p class="section-description">Customize your language and writing style preferences.</p>
+      </div>
+
+      <div class="settings-grid">
+        <div class="setting-item">
+          <div>
+            <div class="setting-item-label">English Variant</div>
+            <div class="setting-item-description">Choose your preferred English spelling and grammar style.</div>
+          </div>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="englishVariant" value="american" checked>
+              <span>American English</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="englishVariant" value="british">
+              <span>British English</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-item-label">Writing Tone</div>
+            <div class="setting-item-description">Set the default tone for enhanced messages.</div>
+          </div>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="tone" value="professional">
+              <span>Professional</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="tone" value="casual" checked>
+              <span>Casual</span>
+            </label>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="section">
-      <h2 class="section-title">Model Preferences</h2>
-      <div class="input-group">
-        <label class="input-label">OpenAI Model</label>
-        <div class="radio-group">
-          <label class="radio-label">
-            <input type="radio" name="model" value="gpt-3.5-turbo" checked>
-            <span>GPT-3.5 Turbo</span>
-          </label>
-          <label class="radio-label">
-            <input type="radio" name="model" value="gpt-4-turbo-preview">
-            <span>GPT-4 Turbo</span>
-          </label>
-          <label class="radio-label">
-            <input type="radio" name="model" value="gpt-4">
-            <span>GPT-4</span>
-          </label>
+    <div class="settings-section">
+      <div class="section-header">
+        <h2 class="section-title">Interface Settings</h2>
+        <p class="section-description">Customize your experience with the enhancement interface.</p>
+      </div>
+
+      <div class="settings-grid">
+        <div class="setting-item">
+          <div>
+            <div class="setting-item-label">Tool Tips</div>
+            <div class="setting-item-description">Show or hide helpful tooltips throughout the interface.</div>
+          </div>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="showTooltips" value="true" checked>
+              <span>Enabled</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="showTooltips" value="false">
+              <span>Disabled</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-item-label">Icon Size</div>
+            <div class="setting-item-description">Choose the size of the enhancement icon in text fields.</div>
+          </div>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="iconSize" value="small">
+              <span>Small</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="iconSize" value="medium" checked>
+              <span>Medium</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="iconSize" value="large">
+              <span>Large</span>
+            </label>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="section">
-      <h2 class="section-title">Icon Preferences</h2>
-      <div class="input-group">
-        <label class="input-label">Icon Size</label>
-        <div class="radio-group">
-          <label class="radio-label">
-            <input type="radio" name="iconSize" value="24">
-            <span>Small (24px)</span>
-          </label>
-          <label class="radio-label">
-            <input type="radio" name="iconSize" value="26">
-            <span>Medium Small (26px)</span>
-          </label>
-          <label class="radio-label">
-            <input type="radio" name="iconSize" value="28" checked>
-            <span>Medium (28px)</span>
-          </label>
-          <label class="radio-label">
-            <input type="radio" name="iconSize" value="30">
-            <span>Medium Large (30px)</span>
-          </label>
-          <label class="radio-label">
-            <input type="radio" name="iconSize" value="32">
-            <span>Large (32px)</span>
-          </label>
-        </div>
+    <div id="saveMessage" class="save-message">
+      <div class="save-message-content">
+        <div class="save-message-icon">✓</div>
+        <div class="save-message-text">Settings saved</div>
       </div>
     </div>
-
-    <div class="section">
-      <h2 class="section-title">Output Preferences</h2>
-      <div class="input-group">
-        <label class="input-label">Number of Outputs</label>
-        <div class="radio-group">
-          <label class="radio-label">
-            <input type="radio" name="outputCount" value="1">
-            <span>Single Output</span>
-          </label>
-          <label class="radio-label">
-            <input type="radio" name="outputCount" value="2">
-            <span>Two Outputs</span>
-          </label>
-          <label class="radio-label">
-            <input type="radio" name="outputCount" value="3" checked>
-            <span>Three Outputs</span>
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <h2 class="section-title">Interface Preferences</h2>
-      <div class="input-group">
-        <label class="input-label">Show Tool Tips</label>
-        <div class="radio-group">
-          <label class="radio-label">
-            <input type="radio" name="showTooltips" value="true" checked>
-            <span>Enabled</span>
-          </label>
-          <label class="radio-label">
-            <input type="radio" name="showTooltips" value="false">
-            <span>Disabled</span>
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <button id="saveSettings" class="button">Save changes</button>
-    <div id="status" class="status"></div>
   </div>
+
   <script src="options.js"></script>
 </body>
-</html> 
+</html>

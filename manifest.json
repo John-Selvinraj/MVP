@@ -33,5 +33,11 @@
       "js": ["content.js"],
       "run_at": "document_end"
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["options.js"],
+      "matches": ["<all_urls>"]
+    }
   ]
 }

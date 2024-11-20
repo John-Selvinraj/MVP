@@ -1,69 +1,130 @@
-document.addEventListener('DOMContentLoaded', () => {
-  // Load saved settings
-  chrome.storage.sync.get(
-    ['apiKey', 'englishVariant', 'tone', 'model', 'iconSize', 'outputCount', 'showTooltips'], 
-    (settings) => {
-      if (settings.apiKey) {
-        document.getElementById('apiKey').value = settings.apiKey;
-      }
-      
-      // Set the English variant radio button
-      const variant = settings.englishVariant || 'american';
-      document.querySelector(`input[name="englishVariant"][value="${variant}"]`).checked = true;
-      
-      // Set the tone radio button
-      const tone = settings.tone || 'professional';
-      document.querySelector(`input[name="tone"][value="${tone}"]`).checked = true;
+document.addEventListener('DOMContentLoaded', async () => {
+  const saveMessage = document.getElementById('saveMessage');
+  let saveTimeout;
 
-      // Set the model radio button
-      const model = settings.model || 'gpt-3.5-turbo';
-      document.querySelector(`input[name="model"][value="${model}"]`).checked = true;
-
-      // Set the icon size radio button
-      const iconSize = settings.iconSize || '28';
-      document.querySelector(`input[name="iconSize"][value="${iconSize}"]`).checked = true;
-
-      // Set the output count radio button
-      const outputCount = settings.outputCount || '3';
-      document.querySelector(`input[name="outputCount"][value="${outputCount}"]`).checked = true;
-
-      // Set the tooltips toggle
-      const showTooltips = settings.showTooltips ?? true; // Default to true if not set
-      document.querySelector(`input[name="showTooltips"][value="${showTooltips}"]`).checked = true;
+  // Add the missing checkExtensionContext function
+  const checkExtensionContext = () => {
+    if (!chrome.runtime?.id) {
+      throw new Error('Extension context invalidated. Please refresh the page.');
     }
-  );
+  };
 
-  // Save settings
-  document.getElementById('saveSettings').addEventListener('click', () => {
-    const apiKey = document.getElementById('apiKey').value;
-    const englishVariant = document.querySelector('input[name="englishVariant"]:checked').value;
-    const tone = document.querySelector('input[name="tone"]:checked').value;
-    const model = document.querySelector('input[name="model"]:checked').value;
-    const iconSize = document.querySelector('input[name="iconSize"]:checked').value;
-    const outputCount = document.querySelector('input[name="outputCount"]:checked').value;
-    const showTooltips = document.querySelector('input[name="showTooltips"]:checked').value === 'true';
-    
-    chrome.storage.sync.set({ 
-      apiKey, 
-      englishVariant,
-      tone,
-      model,
-      iconSize,
-      outputCount,
-      showTooltips
-    }, () => {
-      showStatus('Settings saved successfully!', 'success');
+  // Function to show save message
+  const showSaveMessage = () => {
+    saveMessage.classList.add('visible');
+    if (saveTimeout) {
+      clearTimeout(saveTimeout);
+    }
+    saveTimeout = setTimeout(() => {
+      saveMessage.classList.remove('visible');
+    }, 2000);
+  };
+
+  // Function to save settings
+  const saveSettings = async () => {
+    try {
+      checkExtensionContext();
+
+      // Split settings between sync and local storage
+      const syncSettings = {
+        model: document.querySelector('input[name="model"]:checked')?.value || 'gpt-3.5-turbo',
+        englishVariant: document.querySelector('input[name="englishVariant"]:checked')?.value || 'american',
+        tone: document.querySelector('input[name="tone"]:checked')?.value || 'casual',
+        showTooltips: document.querySelector('input[name="showTooltips"]:checked')?.value === 'true',
+        outputCount: document.querySelector('input[name="outputCount"]:checked')?.value || '3',
+        iconSize: document.querySelector('input[name="iconSize"]:checked')?.value || 'medium'
+      };
+
+      const apiKey = document.getElementById('apiKey')?.value || '';
+
+      // Save settings
+      await Promise.all([
+        chrome.storage.local.set({ apiKey }),
+        chrome.storage.sync.set(syncSettings)
+      ]);
+
+      // Show save message
+      showSaveMessage();
+
+      // Notify content scripts of the change
+      const tabs = await chrome.tabs.query({});
+      tabs.forEach(tab => {
+        chrome.tabs.sendMessage(tab.id, {
+          type: 'settingsUpdated',
+          settings: { ...syncSettings, apiKey }
+        }).catch(() => {
+          // Ignore errors for inactive tabs
+        });
+      });
+
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      if (error.message.includes('Extension context invalidated')) {
+        alert('Please refresh the page to restore extension functionality.');
+      }
+    }
+  };
+
+  // Add change event listeners to all inputs
+  const addChangeListeners = () => {
+    // For radio buttons
+    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+      radio.addEventListener('change', saveSettings);
     });
-  });
-});
 
-function showStatus(message, type) {
-  const status = document.getElementById('status');
-  status.textContent = message;
-  status.className = `status ${type}`;
-  status.style.display = 'block';
+    // For API key input (debounced)
+    const apiKeyInput = document.getElementById('apiKey');
+    let debounceTimeout;
+    apiKeyInput.addEventListener('input', () => {
+      if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
+      }
+      debounceTimeout = setTimeout(saveSettings, 500);
+    });
+  };
 
-  setTimeout(() => {
-    status.style.display = 'none';
-  }, 3000);
-} 
+  // Initial load
+  try {
+    const [syncSettings, localSettings] = await Promise.all([
+      chrome.storage.sync.get({
+        model: 'gpt-3.5-turbo',
+        englishVariant: 'american',
+        tone: 'casual',
+        showTooltips: true,
+        outputCount: '3',
+        iconSize: 'medium'
+      }),
+      chrome.storage.local.get({
+        apiKey: ''
+      })
+    ]);
+
+    // Set API key
+    const apiKeyInput = document.getElementById('apiKey');
+    if (apiKeyInput) {
+      apiKeyInput.value = localSettings.apiKey;
+    }
+
+    // Helper function to safely set radio button
+    const setRadioButton = (name, value) => {
+      const radio = document.querySelector(`input[name="${name}"][value="${value}"]`);
+      if (radio) {
+        radio.checked = true;
+      }
+    };
+
+    // Set radio buttons
+    setRadioButton('model', syncSettings.model);
+    setRadioButton('englishVariant', syncSettings.englishVariant);
+    setRadioButton('tone', syncSettings.tone);
+    setRadioButton('showTooltips', syncSettings.showTooltips.toString());
+    setRadioButton('outputCount', syncSettings.outputCount);
+    setRadioButton('iconSize', syncSettings.iconSize);
+
+    // Add change listeners after setting initial values
+    addChangeListeners();
+
+  } catch (error) {
+    console.error('Error loading settings:', error);
+  }
+}); 
