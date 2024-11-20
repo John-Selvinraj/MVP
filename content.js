@@ -36,7 +36,7 @@ class EnhancementService {
           model: this.model,
           messages: [{
             role: 'system',
-            content: `You are a professional writing assistant that writes in ${variantText} with a ${toneText} tone. Always use ${variantText} spelling and grammar conventions while maintaining the specified tone.`
+            content: `You are a professional business communications expert that writes in ${variantText} with a ${toneText} tone. Always use ${variantText} spelling and grammar conventions while maintaining the specified tone.`
           }, {
             role: 'user',
             content: this.buildPrompt(text, objective)
@@ -71,30 +71,41 @@ class EnhancementService {
   }
 
   buildPrompt(text, objective) {
-    // Ensure text is properly escaped for the prompt
-    const sanitizedText = text.replace(/"/g, '\\"'); // Escape double quotes
-    
     const variantText = this.englishVariant === 'british' ? 'British English' : 'American English';
     const toneText = this.tone === 'casual' ? 'casual and friendly' : 'professional and formal';
     
     const objectiveGuide = {
       clarity: `Enhance clarity by removing ambiguity and simplifying complex sentences, while using ${variantText} spelling and maintaining a ${toneText} tone`,
       grammar: `Ensure grammatical accuracy and proper usage to maintain credibility, following ${variantText} conventions and a ${toneText} tone`,
-      concise: `Make the message more efficient by removing unnecessary words while keeping it focused and impactful, using ${variantText} spelling and a ${toneText} tone`
+      concise: `Convey the same meaning using as few words as possible, keeping the message focused and impactful, while using ${variantText} spelling and a ${toneText} tone`
     };
+
+    // Base requirements that apply to all objectives
+    const baseRequirements = [
+      `${objectiveGuide[objective]}`,
+      'Keep any technical terms intact',
+      `Ensure all spelling and grammar follows ${variantText} conventions`,
+      `Maintain a ${toneText} tone throughout`,
+      'Return ONLY the revised text without any additional explanations or formatting'
+    ];
+
+    // Add objective-specific requirements
+    const specificRequirements = objective === 'concise' 
+      ? [
+          'Feel free to remove or rephrase content to achieve maximum brevity',
+          'Maintain core meaning but eliminate any non-essential information'
+        ]
+      : [
+          'Maintain the original meaning and punctuation (including apostrophes)'
+        ];
 
     return `
 Please revise the following message:
 
-"${sanitizedText}"
+"${text}"
 
 Requirements:
-- ${objectiveGuide[objective]}
-- Maintain the original meaning and punctuation (including apostrophes)
-- Keep any technical terms intact
-- Ensure all spelling, grammar, and punctuation follows ${variantText} conventions
-- Maintain a ${toneText} tone throughout
-- Return ONLY the revised text without any additional explanations or formatting.
+${[...baseRequirements, ...specificRequirements].map(req => `- ${req}`).join('\n')}
 `;
   }
 
