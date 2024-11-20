@@ -5,8 +5,7 @@ let showTooltipsGlobal = true; // Default state
 
 // EnhancementService class
 class EnhancementService {
-  constructor(apiKey) {
-    this.apiKey = apiKey;
+  constructor() {
     this.englishVariant = 'american';
     this.tone = 'professional';
     this.model = 'gpt-3.5-turbo';
@@ -21,7 +20,20 @@ class EnhancementService {
     });
   }
 
+  async getApiKey() {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(['apiKey'], (result) => {
+        resolve(result.apiKey || '');
+      });
+    });
+  }
+
   async enhance(text, objective) {
+    const apiKey = await this.getApiKey();
+    if (!apiKey) {
+      throw new Error('API key is not set');
+    }
+
     const variantText = this.englishVariant === 'british' ? 'British English' : 'American English';
     const toneText = this.tone === 'casual' ? 'casual and friendly' : 'professional and formal';
     
@@ -30,7 +42,7 @@ class EnhancementService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
           model: this.model,
@@ -255,18 +267,14 @@ async function handleEnhancement(objective) {
   if (!selectedText) return;
 
   try {
-    const settings = await new Promise((resolve) => {
-      chrome.storage.sync.get(['apiKey'], resolve);
-    });
-
-    if (!settings.apiKey) {
+    const apiKey = await enhancementService.getApiKey();
+    if (!apiKey) {
       showError('Please set your OpenAI API key in the extension settings');
       return;
     }
 
-    enhancementService.apiKey = settings.apiKey;
     const enhancedOutputs = await enhancementService.enhance(selectedText, objective);
-
+    
     const selectedOutput = await showPreview(selectedText, enhancedOutputs);
     if (selectedOutput) {
       await replaceSelectedText(selectedOutput);
@@ -278,7 +286,6 @@ async function handleEnhancement(objective) {
     iconsContainer.classList.add('hidden');
   }
 }
-
 async function replaceSelectedText(newText) {
   if (!lastRange) return;
 
@@ -423,6 +430,11 @@ function createEnhancementIcon(objective, tooltip) {
   return icon;
 }
 
+// Function to validate API key
+const isValidApiKey = (apiKey) => {
+  return apiKey && typeof apiKey === 'string' && apiKey.trim().startsWith('sk-');
+};
+
 // Function to get settings including API key
 async function getSettings() {
   try {
@@ -447,22 +459,46 @@ async function getSettings() {
   }
 }
 
-// Function to check if API key is set
-async function checkApiKey() {
-  const settings = await getSettings();
-  const apiKey = settings?.apiKey?.trim() || '';
-  return apiKey.length > 0;
-}
-
 // When making API calls
 async function makeApiCall() {
   const settings = await getSettings();
-  const apiKey = settings?.apiKey?.trim();
+  const apiKey = settings?.apiKey?.trim() || '';
   
-  if (!apiKey) {
-    throw new Error('OpenAI API key is not set in the extension settings.');
+  if (!isValidApiKey(apiKey)) {
+    throw new Error('Please set a valid OpenAI API key in the extension settings.');
   }
 
-  // Make your API call using the apiKey
-  // ...
+  try {
+    // Make your API call using the apiKey
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        // ... your request body
+      })
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Invalid API key. Please check your OpenAI API key in the extension settings.');
+      }
+      throw new Error('API request failed. Please try again.');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error:', error);
+    throw error;
+  }
 }
+
+// Add listener for settings updates
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'settingsUpdated') {
+    // Clear any cached API key or settings
+    cachedSettings = null;
+  }
+});

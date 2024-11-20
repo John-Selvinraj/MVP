@@ -20,6 +20,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 2000);
   };
 
+  // Function to clear all storage
+  const clearStorage = async () => {
+    try {
+      await Promise.all([
+        chrome.storage.local.clear(),
+        chrome.storage.sync.clear()
+      ]);
+      console.log('Storage cleared successfully');
+    } catch (error) {
+      console.error('Error clearing storage:', error);
+    }
+  };
+
   // Function to save settings
   const saveSettings = async () => {
     try {
@@ -34,14 +47,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         iconSize: document.querySelector('input[name="iconSize"]:checked')?.value || 'medium'
       };
 
-      // Get API key and trim whitespace
-      const apiKey = (document.getElementById('apiKey')?.value || '').trim();
+      // Handle API key
+      const apiKeyInput = document.getElementById('apiKey');
+      const apiKey = apiKeyInput?.value?.trim() || '';
 
-      // Save settings
-      await Promise.all([
-        chrome.storage.local.set({ apiKey }),
-        chrome.storage.sync.set(syncSettings)
-      ]);
+      // Always clear existing API key first
+      await chrome.storage.local.remove('apiKey');
+
+      // Only save new API key if it's not empty
+      if (apiKey) {
+        await chrome.storage.local.set({ apiKey });
+      }
+
+      // Save other settings
+      await chrome.storage.sync.set(syncSettings);
 
       // Show save message
       showSaveMessage();
@@ -69,18 +88,32 @@ document.addEventListener('DOMContentLoaded', async () => {
       radio.addEventListener('change', saveSettings);
     });
 
-    // For API key input (debounced)
+    // For API key input
     const apiKeyInput = document.getElementById('apiKey');
-    let debounceTimeout;
-    apiKeyInput.addEventListener('input', () => {
-      if (debounceTimeout) {
-        clearTimeout(debounceTimeout);
-      }
-      debounceTimeout = setTimeout(saveSettings, 500);
-    });
+    if (apiKeyInput) {
+      // Save on input (debounced)
+      let debounceTimeout;
+      apiKeyInput.addEventListener('input', () => {
+        if (debounceTimeout) {
+          clearTimeout(debounceTimeout);
+        }
+        debounceTimeout = setTimeout(saveSettings, 500);
+      });
 
-    // Also save on blur for API key
-    apiKeyInput.addEventListener('blur', saveSettings);
+      // Save immediately on blur
+      apiKeyInput.addEventListener('blur', saveSettings);
+
+      // Clear button functionality
+      apiKeyInput.addEventListener('keydown', async (e) => {
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+          if (!apiKeyInput.value) {
+            console.log('Manual clear triggered'); // Debug log
+            await chrome.storage.local.remove('apiKey');
+            await saveSettings();
+          }
+        }
+      });
+    }
   };
 
   // Initial load
@@ -99,10 +132,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       })
     ]);
 
+    console.log('Initial load - API Key:', localSettings.apiKey ? 'exists' : 'empty'); // Debug log
+
     // Set API key
     const apiKeyInput = document.getElementById('apiKey');
     if (apiKeyInput) {
-      apiKeyInput.value = localSettings.apiKey;
+      apiKeyInput.value = localSettings.apiKey || '';
     }
 
     // Helper function to safely set radio button
