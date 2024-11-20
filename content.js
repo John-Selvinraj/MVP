@@ -55,7 +55,8 @@ class EnhancementService {
       return data.choices.map(choice => {
         let content = choice.message.content;
         content = content.replace(/```(?:\w+)?\n?([\s\S]*?)\n?```/g, '$1');
-        content = content.replace(/["']/g, '');
+        // Removed the line that deletes apostrophes and quotes
+        // content = content.replace(/["']/g, '');
         content = content
           .split('\n')
           .map(line => line.trim())
@@ -70,28 +71,38 @@ class EnhancementService {
   }
 
   buildPrompt(text, objective) {
+    // Ensure text is properly escaped for the prompt
+    const sanitizedText = text.replace(/"/g, '\\"'); // Escape double quotes
+    
     const variantText = this.englishVariant === 'british' ? 'British English' : 'American English';
     const toneText = this.tone === 'casual' ? 'casual and friendly' : 'professional and formal';
     
     const objectiveGuide = {
-      clarity: `Enhance clarity while maintaining the main message, using ${variantText} spelling and a ${toneText} tone`,
-      grammar: `Fix grammatical errors using ${variantText} conventions while maintaining a ${toneText} tone`,
-      concise: `Make the message more concise while fixing grammatical errors, using ${variantText} spelling and a ${toneText} tone`
+      clarity: `Enhance clarity by removing ambiguity and simplifying complex sentences, while using ${variantText} spelling and maintaining a ${toneText} tone`,
+      grammar: `Ensure grammatical accuracy and proper usage to maintain credibility, following ${variantText} conventions and a ${toneText} tone`,
+      concise: `Make the message more efficient by removing unnecessary words while keeping it focused and impactful, using ${variantText} spelling and a ${toneText} tone`
     };
 
     return `
 Please revise the following message:
 
-"${text}"
+"${sanitizedText}"
 
 Requirements:
 - ${objectiveGuide[objective]}
-- Maintain the original meaning
+- Maintain the original meaning and punctuation (including apostrophes)
 - Keep any technical terms intact
-- Ensure all spelling and grammar follows ${variantText} conventions
+- Ensure all spelling, grammar, and punctuation follows ${variantText} conventions
 - Maintain a ${toneText} tone throughout
 - Return ONLY the revised text without any additional explanations or formatting.
 `;
+  }
+
+  cleanText(text) {
+    return text
+      .replace(/[^\w\s'’]/g, '') // Allow both straight and curly apostrophes
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 }
 
@@ -256,6 +267,7 @@ async function handleEnhancement(objective) {
     iconsContainer.classList.add('hidden');
   }
 }
+
 async function replaceSelectedText(newText) {
   if (!lastRange) return;
 
@@ -295,6 +307,7 @@ async function replaceSelectedText(newText) {
 
   lastRange = null;
 }
+
 function showPreview(original, enhancedOutputs) {
   return new Promise((resolve) => {
     const preview = document.createElement('div');
@@ -383,6 +396,7 @@ function showError(message) {
   document.body.appendChild(error);
   setTimeout(() => error.remove(), 3000);
 }
+
 // When creating enhancement icons, add a class for tooltips
 function createEnhancementIcon(objective, tooltip) {
   const icon = document.createElement('div');
@@ -397,4 +411,3 @@ function createEnhancementIcon(objective, tooltip) {
   
   return icon;
 }
-
