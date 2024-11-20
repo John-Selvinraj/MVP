@@ -33,6 +33,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
+  const verifyApiKey = async (apiKey) => {
+    if (!apiKey) return false;
+    if (!apiKey.startsWith('sk-')) return false;
+    if (apiKey.length < 20) return false;
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/models', {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
+
+      if (!response.ok) {
+        console.error('API key verification failed:', await response.text());
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('API key verification error:', error);
+      return false;
+    }
+  };
+
   // Function to save settings
   const saveSettings = async () => {
     try {
@@ -51,12 +75,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       const apiKeyInput = document.getElementById('apiKey');
       const apiKey = apiKeyInput?.value?.trim() || '';
 
+      if (apiKey) {
+        const isValid = await verifyApiKey(apiKey);
+        if (!isValid) {
+          showError('Invalid API key. Please check your OpenAI API key.');
+          return;
+        }
+      }
+
+      console.log('Saving API key:', apiKey ? 'Key present' : 'No key'); // Debug log
+
       // Always clear existing API key first
       await chrome.storage.local.remove('apiKey');
 
       // Only save new API key if it's not empty
       if (apiKey) {
         await chrome.storage.local.set({ apiKey });
+        
+        // Verify the key was saved
+        const savedKey = await chrome.storage.local.get(['apiKey']);
+        console.log('Verified saved key:', savedKey.apiKey ? 'Key exists' : 'No key'); // Debug log
       }
 
       // Save other settings
@@ -78,6 +116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (error) {
       console.error('Error saving settings:', error);
+      showError('Failed to save settings: ' + error.message);
     }
   };
 
@@ -115,6 +154,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
   };
+
+  // Add this function to load saved settings
+  const loadSavedSettings = async () => {
+    try {
+      const { apiKey } = await chrome.storage.local.get(['apiKey']);
+      console.log('Loading saved API key:', apiKey ? 'Key exists' : 'No key'); // Debug log
+      
+      const apiKeyInput = document.getElementById('apiKey');
+      if (apiKeyInput && apiKey) {
+        apiKeyInput.value = apiKey;
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
+
+  // Call loadSavedSettings when the page loads
+  loadSavedSettings();
 
   // Initial load
   try {

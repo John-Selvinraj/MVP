@@ -23,15 +23,22 @@ class EnhancementService {
   async getApiKey() {
     return new Promise((resolve) => {
       chrome.storage.local.get(['apiKey'], (result) => {
-        resolve(result.apiKey || '');
+        const apiKey = result.apiKey?.trim() || '';
+        console.log('Retrieved API key:', apiKey ? 'Key exists' : 'No key'); // Debug log
+        resolve(apiKey);
       });
     });
   }
 
+  isValidApiKey(apiKey) {
+    return apiKey && typeof apiKey === 'string' && apiKey.startsWith('sk-') && apiKey.length > 20;
+  }
+
   async enhance(text, objective) {
     const apiKey = await this.getApiKey();
-    if (!apiKey) {
-      throw new Error('API key is not set');
+    
+    if (!this.isValidApiKey(apiKey)) {
+      throw new Error('Please set a valid OpenAI API key in the extension settings');
     }
 
     const variantText = this.englishVariant === 'british' ? 'British English' : 'American English';
@@ -77,8 +84,8 @@ class EnhancementService {
         return content.trim();
       });
     } catch (error) {
-      console.error('API Error:', error);
-      throw new Error(`Enhancement failed: ${error.message}`);
+      console.error('API call failed:', error);
+      throw error;
     }
   }
 
