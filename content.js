@@ -96,23 +96,37 @@ class EnhancementService {
     const objectiveGuide = {
       clarity: `Enhance clarity by removing ambiguity and simplifying complex sentences, while using ${variantText} spelling and maintaining a ${toneText} tone`,
       grammar: `Ensure grammatical accuracy and proper usage to maintain credibility, following ${variantText} conventions and a ${toneText} tone`,
-      concise: `Convey the same meaning using as few words as possible, keeping the message focused and impactful, while using ${variantText} spelling and a ${toneText} tone`
+      concise: `Convey the same meaning using as few words as possible, keeping the message focused and impactful, while using ${variantText} spelling and a ${toneText} tone`,
+      professionalize: `Transform the message into professional business communication that conveys the same intent but in a polished, workplace-appropriate manner. Feel free to completely rephrase and restructure the message while maintaining the core intent. Use ${variantText} spelling and a formal, diplomatic tone.`
     };
 
     // Base requirements that apply to all objectives
-    const baseRequirements = [
-      `${objectiveGuide[objective]}`,
-      'Keep any technical terms intact',
-      `Ensure all spelling and grammar follows ${variantText} conventions`,
-      `Maintain a ${toneText} tone throughout`,
-      'Return ONLY the revised text without any additional explanations or formatting'
-    ];
+    const baseRequirements = objective === 'professionalize' 
+      ? [
+          objectiveGuide[objective],
+          'Feel free to completely rephrase the message',
+          'Elevate casual or informal language to business-appropriate alternatives',
+          'Remove any emotional language and replace with diplomatic phrasing',
+          'Return ONLY the revised text without any additional explanations or formatting'
+        ]
+      : [
+          objectiveGuide[objective],
+          'Keep any technical terms intact',
+          `Ensure all spelling and grammar follows ${variantText} conventions`,
+          `Maintain a ${toneText} tone throughout`,
+          'Return ONLY the revised text without any additional explanations or formatting'
+        ];
 
     // Add objective-specific requirements
     const specificRequirements = objective === 'concise' 
       ? [
           'Feel free to remove or rephrase content to achieve maximum brevity',
           'Maintain core meaning but eliminate any non-essential information'
+        ]
+      : objective === 'professionalize'
+      ? [
+          'Transform informal or casual statements into their professional equivalents',
+          'Present the message in a way that would be appropriate in a formal business context'
         ]
       : [
           'Maintain the original meaning and punctuation (including apostrophes)'
@@ -173,8 +187,12 @@ iconsContainer.innerHTML = `
       <path d="M4 18h4"/>
     </svg>
   </button>
+  <button class="enhance-icon" data-objective="professionalize" data-tooltip="Make Professional">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+      <path d="M7 2h10l-3 4 3 11.294L12 22l-5-4.706L10 6L7 2z"/>
+    </svg>
+  </button>
 `;
-
 document.body.appendChild(iconsContainer);
 
 // Function to handle tooltip visibility
@@ -500,3 +518,4 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // cachedSettings = null;
   }
 });
+
